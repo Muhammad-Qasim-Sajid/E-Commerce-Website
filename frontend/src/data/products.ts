@@ -1,0 +1,86 @@
+import { Product } from '../lib/types';
+
+export const products: Product[] = [
+  {
+    id: 1,
+    name: 'Chronograph Pro',
+    description: 'A premium chronograph watch with automatic movement, featuring a stainless steel case and sapphire crystal. Perfect for both casual and formal occasions.',
+    price: 1299.99,
+    discount: 15,
+    category: 'watches',
+    sku: 'CP-2024-PRO',
+    stock: 42,
+    images: [
+      { id: '1', url: 'https://via.placeholder.com/600x600/3B82F6/FFFFFF?text=Chronograph+Pro', alt: 'Chronograph Pro Front' },
+      { id: '2', url: 'https://via.placeholder.com/600x600/3B82F6/FFFFFF?text=Side+View', alt: 'Chronograph Pro Side' },
+      { id: '3', url: 'https://via.placeholder.com/600x600/3B82F6/FFFFFF?text=Wrist+View', alt: 'Chronograph Pro Wrist' },
+    ],
+    variants: [
+      { id: '1', name: 'Silver / Black', price: 1299.99, stock: 25, sku: 'CP-PRO-SB' },
+      { id: '2', name: 'Rose Gold / Brown', price: 1399.99, stock: 12, sku: 'CP-PRO-RB' },
+      { id: '3', name: 'Black / Black', price: 1299.99, stock: 5, sku: 'CP-PRO-BB' },
+    ],
+    isFeatured: true,
+    rating: 4.8,
+    status: 'published',
+    specifications: {
+      movement: 'Automatic',
+      caseMaterial: 'Stainless Steel',
+      waterResistance: '50m',
+      diameter: '42mm',
+    },
+  },
+  {
+    id: 2,
+    name: 'Classic Dress Watch',
+    description: 'Elegant dress watch with minimalist design, featuring a genuine leather strap and Swiss quartz movement. The perfect accessory for formal events.',
+    price: 899.99,
+    category: 'watches',
+    sku: 'CD-2024-CLASSIC',
+    stock: 18,
+    images: [
+      { id: '4', url: 'https://via.placeholder.com/600x600/10B981/FFFFFF?text=Dress+Watch', alt: 'Classic Dress Watch' },
+      { id: '5', url: 'https://via.placeholder.com/600x600/10B981/FFFFFF?text=Leather+Strap', alt: 'Leather Strap Detail' },
+    ],
+    variants: [
+      { id: '4', name: 'White / Brown Leather', price: 899.99, stock: 10, sku: 'CD-CLASSIC-WB' },
+      { id: '5', name: 'Black / Black Leather', price: 899.99, stock: 8, sku: 'CD-CLASSIC-BB' },
+    ],
+    isFeatured: true,
+    rating: 4.6,
+    status: 'published',
+    specifications: {
+      movement: 'Swiss Quartz',
+      caseMaterial: 'Stainless Steel',
+      waterResistance: '30m',
+      diameter: '40mm',
+    },
+  },
+  {
+    id: 3,
+    name: 'Diver Series 300',
+    description: 'Professional dive watch with 300m water resistance, luminous markers, and unidirectional bezel. Built for adventure and everyday wear.',
+    price: 1599.99,
+    discount: 20,
+    category: 'watches',
+    sku: 'DS-2024-300',
+    stock: 7,
+    images: [
+      { id: '6', url: 'https://via.placeholder.com/600x600/6366F1/FFFFFF?text=Diver+300', alt: 'Diver Series 300' },
+      { id: '7', url: 'https://via.placeholder.com/600x600/6366F1/FFFFFF?text=Bezel+Detail', alt: 'Bezel Detail' },
+    ],
+    variants: [
+      { id: '6', name: 'Blue / Steel', price: 1599.99, stock: 4, sku: 'DS-300-BS' },
+      { id: '7', name: 'Black / Rubber', price: 1499.99, stock: 3, sku: 'DS-300-BR' },
+    ],
+    isFeatured: false,
+    rating: 4.9,
+    status: 'published',
+    specifications: {
+      movement: 'Automatic',
+      caseMaterial: 'Titanium',
+      waterResistance: '300m',
+      diameter: '44mm',
+    },
+  },
+];
