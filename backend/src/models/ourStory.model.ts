@@ -7,7 +7,7 @@ const founderQuotesSchema = new mongoose.Schema({
     },
     quotesOfFounder: {
         type: String,
-        required: [true, "Quotes are required"]
+        required: [true, "Founder quotes are required"]
     },
 });
 const headParaSchema = new mongoose.Schema({
@@ -23,6 +23,10 @@ const headParaSchema = new mongoose.Schema({
 
 const ourStorySchema = new mongoose.Schema(
     {
+        _id: {
+            type: String,
+            default: "ourStory"
+        },
         tagline: {
             type: String,
             required: [true, "Tagline is required"],

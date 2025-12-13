@@ -62,6 +62,9 @@ const productSchema = new mongoose.Schema(
             default: false
         }
         // Total stock will be calculated by adding variant stocks on frontend 
+    },
+    {
+        timestamps: true 
     }
 );
 

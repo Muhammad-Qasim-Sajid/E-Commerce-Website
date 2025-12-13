@@ -63,9 +63,6 @@ const homeSchema = new mongoose.Schema(
                 message: "Exactly 3 testimonials are required"
             }
         }
-    },
-    {
-        timestamps: true
     }
 );
 

@@ -1,11 +1,10 @@
-import { Response } from "express";
+class ApiError extends Error {
+    statusCode: number;
 
-const ApiError = (res: Response, statusCode: number, message: string) => {
-    return res.status(statusCode).json({
-        success: false,
-        message,
-        data: null
-    });
-};
+    constructor(statusCode: number, message: string) {
+        super(message);
+        this.statusCode = statusCode;
+    }
+}
 
 export default ApiError;

@@ -12,6 +12,10 @@ const faqItemSchema = new mongoose.Schema({
 });
 
 const faqSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        default: "faqs"
+    },
     faqs: {
         type: [faqItemSchema],
         validate: {
