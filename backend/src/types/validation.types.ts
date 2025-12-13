@@ -57,3 +57,13 @@ export const editFaqsPageSchema = z.object({
         .array(faqsItemsSchema)
         .min(1, "At least 1 FAQ is required")
 });
+
+
+
+// Contact Validations
+export const contactPageSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email"),
+    subject: z.string().min(1, "Subject is required"),
+    message: z.string().min(1, "Message is required")
+});
