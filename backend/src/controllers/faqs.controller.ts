@@ -23,10 +23,10 @@ export const editFaqs = asyncHandler(async(req: Request, res: Response) => {
         { _id: "faqs"},
         parsed.data,
         {
-            new: true,
             upsert: true,
             runValidators: true,
-            setDefaultsOnInsert: true
+            setDefaultsOnInsert: true,
+            new: true
         }
     );
 

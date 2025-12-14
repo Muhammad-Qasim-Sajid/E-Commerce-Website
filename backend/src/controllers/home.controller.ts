@@ -58,10 +58,10 @@ export const editHomePage = asyncHandler(async (req: Request, res: Response) => 
             heroImage,
         },
         {
-            new: true,
             upsert: true,
             runValidators: true,
             setDefaultsOnInsert: true,
+            new: true
         }
     );
 

@@ -4,10 +4,10 @@ import { addContact, deleteContact, editContact, getAllContacts, getReadContacts
 const router = Router();
 
 router.route("/add-contact").post(addContact);
-router.route("/edit-contact").post(editContact);
+router.route("/edit-contact/:id").post(editContact);
 router.route("/get-all-contacts").get(getAllContacts);
 router.route("/get-read-contacts").get(getReadContacts);
 router.route("/get-unread-contacts").get(getUnreadContacts);
-router.route("/delete-contact").post(deleteContact);
+router.route("/delete-contact/:id").post(deleteContact);
 
 export default router;

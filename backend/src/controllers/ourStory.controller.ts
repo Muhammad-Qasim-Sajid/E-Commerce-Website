@@ -23,10 +23,10 @@ export const editOurStoryPage = asyncHandler(async (req: Request, res: Response)
         { _id: "ourStory" },
         parsed.data,
         {
-            new: true,
             upsert: true,
             runValidators: true,
-            setDefaultsOnInsert: true
+            setDefaultsOnInsert: true,
+            new: true
         }
     );
 
