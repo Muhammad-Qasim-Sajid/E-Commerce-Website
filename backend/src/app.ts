@@ -21,12 +21,14 @@ import homeRouter from "./routes/home.routes.js";
 import ourStoryRouter from "./routes/ourStory.route.js";
 import faqsRouter from "./routes/faqs.routes.js";
 import contactRouter from "./routes/contact.routes.js";
+import productRouter from "./routes/product.routes.js";
 
 // Routes declaration
 app.use("/api/v1", homeRouter);
 app.use("/api/v1/our-story", ourStoryRouter);
 app.use("/api/v1/faqs", faqsRouter);
 app.use("/api/v1/contact", contactRouter);
+app.use("/api/v1/product", productRouter);
 
 // Global error handler
 app.use(globalErrorHandler);

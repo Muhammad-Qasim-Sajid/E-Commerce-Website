@@ -67,3 +67,33 @@ export const contactPageSchema = z.object({
     subject: z.string().min(1, "Subject is required"),
     message: z.string().min(1, "Message is required")
 });
+
+
+
+// Product Validations
+export const variantSchema = z.object({
+    variantName: z.string().min(1, "Variant name is required"),
+    variantPrice: z.number().min(1, "Variant price is required"),
+    variantPreviousPrice: z.number().min(0).optional(),
+    variantOrder: z.number().int().min(1, "Variant order is required"),
+    variantStock: z.number().int().min(0, "Variant stock cannot be negative"),
+}).refine(
+    (data) => data.variantPreviousPrice === undefined || data.variantPreviousPrice > data.variantPrice,
+    {
+        message: "Previous variant price must be greater than variant price",
+        path: ["variantPreviousPrice"],
+    }
+);
+
+export const productPageSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    variants: z
+        .array(variantSchema)
+        .min(1, "At least 1 variant is required"),
+    smallDescription: z.string()
+        .min(1, "Small description is required")
+        .max(100, "Small description should not exceed 100 characters"),
+    longDescription: z.string()
+        .min(300, "Long description should be at least 300 characters"),
+    featuredProduct: z.boolean().default(false)
+});

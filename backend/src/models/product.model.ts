@@ -6,17 +6,27 @@ const variantSchema = new mongoose.Schema({
         required: [true, "Variant name is required"]
     },
     variantImage: {
-        type: String, // One variant have one image only
+        type: String,
         required: [true, "Variant image is required"]
     },
     variantPrice: {
-        type: Number // It is not required cuzz if it is not present then general price will be considered
+        type: Number,
+        required: [true, "Variant price is required"]
     },
     variantPreviousPrice: {
-        type: Number // This will only be used if variant price is given to calculate the discount on variant
+        type: Number,
+        validate: {
+            validator: function(this: any, value: number) {
+                if (value !== undefined && value !== null) {
+                    return value > this.variantPrice;
+                }
+                return true; // skip validation if not provided
+            },
+            message: "Variant previous price must be greater than variant price"
+        }
     },
-    variantOrder: { 
-        type: Number, 
+    variantOrder: {
+        type: Number,
         required: [true, "Variant order is required"]
     },
     variantStock: {
@@ -50,21 +60,13 @@ const productSchema = new mongoose.Schema(
             required: [true, "Long description is required"],
             minlength: [300, "Long description should be greater 300 characters"]
         },
-        generalPrice: {
-            type: Number,
-            required: [true, "General price is required"],
-        },
-        previousGeneralPrice: {
-            type: Number // Only add this while giving discount cuzz it will be used to show discounted price on frontend (This message will be displayed on frontend)
-        },
         featuredProduct: {
-            type: Boolean, // First 5 featured products will be shown on home page
+            type: Boolean,
             default: false
         }
-        // Total stock will be calculated by adding variant stocks on frontend 
     },
     {
-        timestamps: true 
+        timestamps: true
     }
 );
 
