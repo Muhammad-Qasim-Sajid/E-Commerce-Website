@@ -8,6 +8,6 @@ router.route("/add-product").post(upload.array("variantImages"), addProduct);
 router.route("/edit-product/:id").post(upload.array("variantImages"), editProduct);
 router.route("/get-product/:id").get(getProduct);
 router.route("/get-all-products").get(getAllProducts);
-router.route("/delete-product/:id").post(deleteProduct);
+router.route("/delete-product/:id").delete(deleteProduct);
 
 export default router;

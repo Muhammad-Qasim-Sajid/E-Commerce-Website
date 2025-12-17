@@ -22,6 +22,8 @@ import ourStoryRouter from "./routes/ourStory.route.js";
 import faqsRouter from "./routes/faqs.routes.js";
 import contactRouter from "./routes/contact.routes.js";
 import productRouter from "./routes/product.routes.js";
+import shippingPriceRouter from "./routes/shippingPrice.routes.js";
+import orderRouter from "./routes/product.routes.js";
 
 // Routes declaration
 app.use("/api/v1", homeRouter);
@@ -29,6 +31,8 @@ app.use("/api/v1/our-story", ourStoryRouter);
 app.use("/api/v1/faqs", faqsRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/product", productRouter);
+app.use("/api/v1/shipping-price", shippingPriceRouter);
+app.use("/api/v1/order", orderRouter);
 
 // Global error handler
 app.use(globalErrorHandler);

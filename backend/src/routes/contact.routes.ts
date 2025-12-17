@@ -8,6 +8,6 @@ router.route("/edit-contact/:id").post(editContact);
 router.route("/get-all-contacts").get(getAllContacts);
 router.route("/get-read-contacts").get(getReadContacts);
 router.route("/get-unread-contacts").get(getUnreadContacts);
-router.route("/delete-contact/:id").post(deleteContact);
+router.route("/delete-contact/:id").delete(deleteContact);
 
 export default router;

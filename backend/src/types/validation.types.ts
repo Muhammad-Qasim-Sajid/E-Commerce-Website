@@ -97,3 +97,23 @@ export const productPageSchema = z.object({
         .min(300, "Long description should be at least 300 characters"),
     featuredProduct: z.boolean().default(false)
 });
+
+
+
+// Order Validations
+const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId");
+export const orderItemsSchema = z.object({
+    productId: objectId,
+    variantId: objectId,
+    quantity: z.number().int().min(1, "Quantity is required"),
+});
+
+export const orderPageSchema = z.object({
+    customerName: z.string().min(1, "Customer name is required"),
+    customerEmail: z.string().email("Invalid email"),
+    customerPhone: z.string().min(7, "Customer phone is required"),
+    customerAddress: z.string().min(10, "Customer address is required"),
+    items: z
+        .array(orderItemsSchema)
+        .min(1, "At least 1 item is required"),
+});

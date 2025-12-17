@@ -49,7 +49,7 @@ const orderSchema = new mongoose.Schema(
                 },
                 totalPrice: {
                     type: Number,
-                    required: true // quantity * variantSnapshot.price
+                    required: true
                 }
             }
         ],
@@ -74,6 +74,11 @@ const orderSchema = new mongoose.Schema(
         trackingNumber: {
             type: String,
         },
+        trackingToken: {
+            type: String,
+            required: true,
+            unique: true
+        }
     },
     {
         timestamps: true 
