@@ -71,7 +71,7 @@ const orderSchema = new mongoose.Schema(
             enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
             default: "Processing",
         },
-        trackingNumber: {
+        shippingTrackingNumber: {
             type: String,
         },
         trackingToken: {
@@ -84,5 +84,7 @@ const orderSchema = new mongoose.Schema(
         timestamps: true 
     }
 );
+
+orderSchema.index({ createdAt: -1 });
 
 export const Order = mongoose.model("Order", orderSchema);

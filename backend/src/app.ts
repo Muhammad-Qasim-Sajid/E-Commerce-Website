@@ -23,7 +23,7 @@ import faqsRouter from "./routes/faqs.routes.js";
 import contactRouter from "./routes/contact.routes.js";
 import productRouter from "./routes/product.routes.js";
 import shippingPriceRouter from "./routes/shippingPrice.routes.js";
-import orderRouter from "./routes/product.routes.js";
+import orderRouter from "./routes/order.routes.js";
 
 // Routes declaration
 app.use("/api/v1", homeRouter);

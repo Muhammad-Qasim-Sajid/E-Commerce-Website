@@ -1,5 +1,8 @@
+// Body, Pramas, Query
+
 import mongoose from "mongoose";
 import { Request, Response } from "express";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import asyncHandler from "../utils/asyncHandler.utils.js";
 import ApiError from "../utils/apiError.utils.js";
 import ApiResponse from "../utils/apiResponse.utils.js";
@@ -8,6 +11,9 @@ import { ShippingPrice } from "../models/shippingPrice.model.js";
 import { Product } from "../models/product.model.js";
 import { Order } from "../models/order.model.js";
 import { ORDERS_LIMIT } from "../constants.js";
+import sendEmail from "../utils/sendEmail.utils.js";
+import generateTrackingToken from "../utils/generateTrackingToken.utils.js";
+import orderConfirmationEmail from "../utils/orderConfirmationEmail.utils.js";
 
 export const addOrder = asyncHandler(async (req: Request, res: Response) => {
 
@@ -57,16 +63,20 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
                 }
 
                 const stockUpdate = await Product.updateOne(
-                    {
+                    { 
                         _id: product._id,
                         "variants._id": variant._id,
                         "variants.variantStock": { $gte: item.quantity }
                     },
-                    { 
-                        $inc: { "variants.$.variantStock": -item.quantity } 
+                    {
+                        $inc: { "variants.$[v].variantStock": -item.quantity }
                     },
-                    { session }
+                    {
+                        arrayFilters: [{ "v._id": variant._id }],
+                        session
+                    }
                 );
+
 
                 if (stockUpdate.modifiedCount === 0) { // How many documents were actually updated???
                     throw new ApiError(400, `Stock conflict for ${product.name} - ${variant.variantName}`);
@@ -100,18 +110,84 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
                         shippingPrice,
                         totalPrice: calculatedTotal,
                         paymentStatus: "Pending",
-                        orderStatus: "Processing"
+                        orderStatus: "Processing",
+                        trackingToken: "TEMP"
                 }],
                 { session }
             );
+
+            const trackingToken = generateTrackingToken(order[0]._id.toString(), customerEmail);
+            order[0].trackingToken = trackingToken;
+            await order[0].save({ session });
             return order[0];
         });
-
-        return ApiResponse(res, 201, "Order placed successfully", createdOrder);
     } finally {
         session.endSession();
     }
 
+    const trackingUrl = `${process.env.FRONTEND_URL}/order/track-order?token=${createdOrder.trackingToken}`;
+
+    try {
+        await sendEmail({
+            to: createdOrder.customerEmail,
+            subject: "Order Confirmation & Order Tracking",
+            html: orderConfirmationEmail({
+                customerName: createdOrder.customerName,
+                customerAddress: createdOrder.customerAddress,
+                totalPrice: createdOrder.totalPrice,
+                trackingUrl,
+            }),
+        });
+    } catch (error) {
+        console.log("EMAIL_FAILURE:", error); // Debug log
+    }
+
+    return ApiResponse(res, 201, "Order placed successfully", createdOrder);
+
+});
+
+interface OrderTrackingPayload extends JwtPayload {
+    orderId: string;
+    email: string;
+    type: "order_tracking";
+}
+
+export const trackOrder = asyncHandler(async (req: Request, res: Response) => {
+    const { token } = req.query;
+    if (typeof token !== "string") throw new ApiError(400, "Invalid tracking token");
+
+    let payload: OrderTrackingPayload;
+    try {
+        const decoded = jwt.verify(token, process.env.TRACKING_SECRET as string);
+        if (typeof decoded !== "object" || decoded === null) {
+            throw new ApiError(401, "Invalid tracking token");
+        }
+        payload = decoded as OrderTrackingPayload;
+    } catch {
+        throw new ApiError(401, "Invalid or expired tracking token");
+    }
+
+    if (payload.type !== "order_tracking") {
+        throw new ApiError(403, "Invalid token type");
+    }
+
+    const order = await Order.findOne({ _id: payload.orderId, trackingToken: token }).populate("items.productId", "name").lean();
+    if (!order) throw new ApiError(404, "Order not found");
+
+    if (order.customerEmail !== payload.email) throw new ApiError(403, "Unauthorized access");
+
+    return ApiResponse(res, 200, "Order retrieved for tracking", {
+        orderId: order._id,
+        customerName: order.customerName,
+        customerAddress: order.customerAddress,
+        items: order.items,
+        totalPrice: order.totalPrice,
+        shippingPrice: order.shippingPrice,
+        orderStatus: order.orderStatus,
+        paymentStatus: order.paymentStatus,
+        shippingTrackingNumber: order.shippingTrackingNumber ?? null,
+        createdAt: order.createdAt,
+    });
 });
 
 export const editPaymentStatus = asyncHandler(async (req: Request, res: Response) => {
@@ -164,26 +240,26 @@ export const editOrderStatus = asyncHandler(async (req: Request, res: Response) 
     return ApiResponse(res, 200, "Order status updated successfully", order);
 });
 
-export const editTrackingNumber = asyncHandler(async (req: Request, res: Response) => {
+export const editShippingTrackingNumber = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
     if (!id) throw new ApiError(400, "ID is required");
 
-    const { trackingNumber } = req.body;
-    if (!trackingNumber || typeof trackingNumber !== "string") {
-        throw new ApiError(400, "Tracking number is required and must be a string");
+    const { shippingTrackingNumber } = req.body;
+    if (!shippingTrackingNumber || typeof shippingTrackingNumber !== "string") {
+        throw new ApiError(400, "Shipping tracking number is required and must be a string");
     }
 
     const order = await Order.findById(id);
     if (!order) throw new ApiError(404, "Order not found");
 
-    if (order.trackingNumber === trackingNumber) {
-        return ApiResponse(res, 200, "Tracking number is already up-to-date", order);
+    if (order.shippingTrackingNumber === shippingTrackingNumber) {
+        return ApiResponse(res, 200, "Shipping tracking number is already up-to-date", order);
     }
 
-    order.trackingNumber = trackingNumber;
+    order.shippingTrackingNumber = shippingTrackingNumber;
     await order.save();
 
-    return ApiResponse(res, 200, "Tracking number updated successfully", order);
+    return ApiResponse(res, 200, "Shipping tracking number updated successfully", order);
 });
 
 export const getOrder = asyncHandler(async(req: Request, res: Response) => {
