@@ -4,7 +4,7 @@ dotenv.config();
 import connectDB from "./db/db.js";
 import app from "./app.js";
 
-(async () => {
+(async (): Promise<void> => {
     try {
         await connectDB();
         app.listen(process.env.PORT || 5000, () => {

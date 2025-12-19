@@ -8,7 +8,7 @@ interface MailOptions {
     html: string;
 }
 
-const sendEmail = async ({ to, subject, html }: MailOptions) => {
+const sendEmail = async ({ to, subject, html }: MailOptions): Promise<void> => {
     await resend.emails.send({
         from: "Greatness <onboarding@resend.dev>",
         to,

@@ -10,7 +10,7 @@ import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.ut
 import { cleanupFiles } from "../utils/cleanup.js";
 import { Product } from "../models/product.model.js";
 
-export const addProduct = asyncHandler(async (req: Request, res: Response) => {
+export const addProduct = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
 
     console.log(req.body); // Debug log
 
@@ -74,14 +74,14 @@ export const addProduct = asyncHandler(async (req: Request, res: Response) => {
 
 });
 
-export const editProduct = asyncHandler(async (req: Request, res: Response) => {
+export const editProduct = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) {
         cleanupFiles(req.files as Express.Multer.File[]);
         throw new ApiError(400, "ID is required")
     }
 
-    const existingProduct = await Product.findById(id);
+    const existingProduct = await Product.findById(id).lean();
     if (!existingProduct) {
         cleanupFiles(req.files as Express.Multer.File[]);
         throw new ApiError(404, "Product not found");
@@ -180,13 +180,13 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
-export const getProduct = asyncHandler(async(req: Request, res: Response) => {
+export const getProduct = asyncHandler(async(req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) {
         throw new ApiError(400, "ID is required");
     }
 
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).lean();
 
     if (!product) {
         throw new ApiError(404, "Product not found");
@@ -194,17 +194,17 @@ export const getProduct = asyncHandler(async(req: Request, res: Response) => {
     return ApiResponse(res, 200, "Product retrieved successfully", product);
 });
 
-export const getAllProducts = asyncHandler(async(req: Request, res: Response) => {
-    const products = await Product.find();
+export const getAllProducts = asyncHandler(async(req: Request, res: Response): Promise<Response> => {
+    const products = await Product.find().lean();
     if(products.length === 0) throw new ApiError(404, "No products found");
     return ApiResponse(res, 200, "Products retrieved successfully", products);
 });
 
-export const deleteProduct = asyncHandler(async (req: Request, res: Response) => {
+export const deleteProduct = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) throw new ApiError(400, "ID is required");
 
-    const product = await Product.findByIdAndDelete(id);
+    const product = await Product.findByIdAndDelete(id).lean();
     if (!product) throw new ApiError(404, "Product not found");
 
     const imageUrls = product.variants.map(v => v.variantImage);

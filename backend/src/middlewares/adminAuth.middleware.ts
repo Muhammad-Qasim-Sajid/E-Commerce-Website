@@ -4,7 +4,7 @@ import asyncHandler from "../utils/asyncHandler.utils.js";
 import ApiResponse from "../utils/apiResponse.utils.js";
 import { Admin } from "../models/admin.model.js";
 
-export const adminAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+export const adminAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<Response | void> => {
     try {
         const token = req.cookies?.adminToken;
         if (!token) return ApiResponse(res, 401, "Unauthorized");

@@ -1,6 +1,8 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { Data_Limit } from "./constants.js";
 import globalErrorHandler from "./middlewares/globalErrorHandler.middleware.js";
 
@@ -8,13 +10,65 @@ const app = express();
 
 // Middleawres
 app.use(cookieParser());
-app.use(cors({
-    origin: process.env.CORS_ORIGIN, // Will set CORS_ORIGIN later
-    credentials: true
-}));
+app.use(
+    cors({
+        origin: process.env.CORS_ORIGIN,
+        credentials: true,
+        methods: ["GET", "POST", "PATCH", "DELETE"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    })
+);
 app.use(express.json({limit: `${Data_Limit}`}));
 app.use(express.urlencoded({extended: true, limit: `${Data_Limit}`}));
 app.use(express.static("public"));
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
+    })
+);
+// contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       scriptSrc: ["'self'"],
+//       styleSrc: ["'self'", "'unsafe-inline'"],
+//       imgSrc: ["'self'", "data:", "https:"],
+//       connectSrc: ["'self'", process.env.FRONTEND_URL],
+//       fontSrc: ["'self'", "https:", "data:"],
+//       frameAncestors: ["'none'"],
+//       objectSrc: ["'none'"],
+//     },
+// },
+app.use("/api/v1/admin/login", rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+}));
+app.use("/api/v1/order/add-order", rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+}));
+app.use("/api/v1/order/track-order", rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+}));
+app.use("/api/v1/admin", rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+}));
+app.use("/api", rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+}));
 
 // Router imports
 import homeRouter from "./routes/home.routes.js";

@@ -10,7 +10,7 @@ const orderConfirmationEmail = ({
     customerAddress,
     totalPrice,
     trackingUrl,
-}: OrderConfirmationEmailProps) => {
+}: OrderConfirmationEmailProps): string => {
     return `
 <!DOCTYPE html>
 <html>

@@ -7,7 +7,7 @@ import ApiResponse from "../utils/apiResponse.utils.js";
 import { editFaqsPageSchema } from "../types/validation.types.js";
 import { FAQs } from "../models/faqs.model.js";
 
-export const editFaqs = asyncHandler(async(req: Request, res: Response) => {
+export const editFaqs = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
 
     console.log(req.body) // Debug log
 
@@ -20,7 +20,7 @@ export const editFaqs = asyncHandler(async(req: Request, res: Response) => {
     console.log(parsed); // Debug log
 
     const faqs = await FAQs.findOneAndUpdate(
-        { _id: "faqs"},
+        { _id: "faqs" },
         parsed.data,
         {
             upsert: true,
@@ -34,9 +34,9 @@ export const editFaqs = asyncHandler(async(req: Request, res: Response) => {
 
 });
 
-export const getFaqs = asyncHandler(async(req: Request, res: Response) => {
-    const faqs = await FAQs.findById("faqs");
-    if(!faqs) {
+export const getFaqs = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const faqs = await FAQs.findById("faqs").lean();
+    if (!faqs) {
         throw new ApiError(404, "FAQs not found");
     }
     return ApiResponse(res, 200, "FAQs retrieved successfully", faqs);

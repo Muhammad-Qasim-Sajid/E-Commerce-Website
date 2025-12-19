@@ -10,7 +10,7 @@ import { editHomePageSchema } from "../types/validation.types.js";
 import { Home } from "../models/home.model.js";
 import { Product } from "../models/product.model.js";
 
-export const editHomePage = asyncHandler(async (req: Request, res: Response) => {
+export const editHomePage = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
 
     console.log(req.body); // Debug log
 
@@ -36,7 +36,7 @@ export const editHomePage = asyncHandler(async (req: Request, res: Response) => 
     }
 
 
-    const existingHome = await Home.findById("homePage");
+    const existingHome = await Home.findById("homePage").lean();
     if (!existingHome && !req.file?.path) {
         throw new ApiError(400, "Hero image is required to create home page");
     }
@@ -88,16 +88,16 @@ export const editHomePage = asyncHandler(async (req: Request, res: Response) => 
     }
 });
 
-export const getHomePage = asyncHandler(async (req: Request, res: Response) => {
-    const home = await Home.findById("homePage");
+export const getHomePage = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const home = await Home.findById("homePage").lean();
     if (!home) {
         throw new ApiError(404, "Home page not found");
     }
-    const featuredProducts = await Product.find({ "featuredProduct": true }).limit(5);
+    const featuredProducts = await Product.find({ "featuredProduct": true }).limit(5).lean();
     const homeWithFeaturedProducts = {
         ...home,
         featuredProducts
     }
-    
+
     return ApiResponse(res, 200, "Home page retrieved successfully", homeWithFeaturedProducts);
 });

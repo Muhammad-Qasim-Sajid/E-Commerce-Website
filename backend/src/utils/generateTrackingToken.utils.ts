@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const generateTrackingToken = (orderId: string, email: string) => {
+const generateTrackingToken = (orderId: string, email: string): string => {
     return jwt.sign(
         {
             orderId,

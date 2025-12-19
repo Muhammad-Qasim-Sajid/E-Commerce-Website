@@ -15,7 +15,7 @@ import sendEmail from "../utils/sendEmail.utils.js";
 import generateTrackingToken from "../utils/generateTrackingToken.utils.js";
 import orderConfirmationEmail from "../utils/orderConfirmationEmail.utils.js";
 
-export const addOrder = asyncHandler(async (req: Request, res: Response) => {
+export const addOrder = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
 
     const parsed = orderPageSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -25,7 +25,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
 
     const { customerName, customerEmail, customerPhone, customerAddress, items } = parsed.data;
 
-    const shippingDoc = await ShippingPrice.findOne();
+    const shippingDoc = await ShippingPrice.findOne().lean();
     if (!shippingDoc) {
         throw new ApiError(500, "Shipping price not configured");
     }
@@ -47,7 +47,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response) => {
                         "variants._id": item.variantId 
                     },
                     { name: 1, variants: 1 }
-                ).session(session);
+                ).session(session).lean();
 
                 if (!product) {
                     throw new ApiError(404, "Product or variant not found");
@@ -152,7 +152,7 @@ interface OrderTrackingPayload extends JwtPayload {
     type: "order_tracking";
 }
 
-export const trackOrder = asyncHandler(async (req: Request, res: Response) => {
+export const trackOrder = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { token } = req.query;
     if (typeof token !== "string") throw new ApiError(400, "Invalid tracking token");
 
@@ -190,7 +190,7 @@ export const trackOrder = asyncHandler(async (req: Request, res: Response) => {
     });
 });
 
-export const editPaymentStatus = asyncHandler(async (req: Request, res: Response) => {
+export const editPaymentStatus = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) throw new ApiError(400, "ID is required");
 
@@ -215,7 +215,7 @@ export const editPaymentStatus = asyncHandler(async (req: Request, res: Response
     return ApiResponse(res, 200, "Payment status updated successfully", order);
 });
 
-export const editOrderStatus = asyncHandler(async (req: Request, res: Response) => {
+export const editOrderStatus = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) throw new ApiError(400, "ID is required");
 
@@ -240,7 +240,7 @@ export const editOrderStatus = asyncHandler(async (req: Request, res: Response) 
     return ApiResponse(res, 200, "Order status updated successfully", order);
 });
 
-export const editShippingTrackingNumber = asyncHandler(async (req: Request, res: Response) => {
+export const editShippingTrackingNumber = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) throw new ApiError(400, "ID is required");
 
@@ -262,13 +262,13 @@ export const editShippingTrackingNumber = asyncHandler(async (req: Request, res:
     return ApiResponse(res, 200, "Shipping tracking number updated successfully", order);
 });
 
-export const getOrder = asyncHandler(async(req: Request, res: Response) => {
+export const getOrder = asyncHandler(async(req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) {
         throw new ApiError(400, "ID is required");
     }
 
-    const order = await Order.findById(id).populate("items.productId", "name");
+    const order = await Order.findById(id).populate("items.productId", "name").lean();
 
     if (!order) {
         throw new ApiError(404, "Order not found");
@@ -276,7 +276,11 @@ export const getOrder = asyncHandler(async(req: Request, res: Response) => {
     return ApiResponse(res, 200, "Order retrieved successfully", order);
 });
 
-const fetchOrders = async (filter: Record<string, any>, cursor?: string) => {
+const fetchOrders = async (filter: Record<string, any>, cursor?: string): Promise<{
+    orders: any[];
+    hasMore: boolean;
+    nextCursor: Date | null;
+}> => {
     const query: any = { ...filter };
 
     if (cursor) {
@@ -290,7 +294,8 @@ const fetchOrders = async (filter: Record<string, any>, cursor?: string) => {
     const orders = await Order.find(query)
         .sort({ createdAt: -1 })
         .limit(ORDERS_LIMIT + 1)
-        .populate("items.productId", "name");
+        .populate("items.productId", "name")
+        .lean();
 
     const hasMore = orders.length > ORDERS_LIMIT;
     if (hasMore) orders.pop();
@@ -302,16 +307,16 @@ const fetchOrders = async (filter: Record<string, any>, cursor?: string) => {
     }
 };
 
-export const getAllOrders = asyncHandler(async (req: Request, res: Response) => {
+export const getAllOrders = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const data = await fetchOrders({}, req.query.cursor as string);
     return ApiResponse(res, 200, "Orders retrieved successfully", data);
 });
 
-export const deleteOrder = asyncHandler(async(req: Request, res: Response) => {
+export const deleteOrder = asyncHandler(async(req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) throw new ApiError(400, "ID is required");
 
-    const order = await Order.findByIdAndDelete(id);
+    const order = await Order.findByIdAndDelete(id).lean();
     if (!order) throw new ApiError(404, "Order not found");
 
     return ApiResponse(res, 200, "Order deleted successfully", order);

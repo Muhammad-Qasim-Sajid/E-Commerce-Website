@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-const globalErrorHandler = (error: any, req: Request, res: Response, next: NextFunction) => {
+const globalErrorHandler = (error: any, req: Request, res: Response, next: NextFunction): void => {
     console.error(error.stack || error); // Debug log
 
     const statusCode = error.statusCode || 500;

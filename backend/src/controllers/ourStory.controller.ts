@@ -7,7 +7,7 @@ import ApiResponse from "../utils/apiResponse.utils.js";
 import { editOurStoryPageSchema } from "../types/validation.types.js";
 import { OurStory } from "../models/ourStory.model.js";
 
-export const editOurStoryPage = asyncHandler(async (req: Request, res: Response) => {
+export const editOurStoryPage = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
 
     console.log(req.body); // Debug log
 
@@ -34,8 +34,8 @@ export const editOurStoryPage = asyncHandler(async (req: Request, res: Response)
 
 });
 
-export const getOurStoryPage = asyncHandler(async (req: Request, res: Response) => {
-    const ourStory = await OurStory.findById("ourStory");
+export const getOurStoryPage = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const ourStory = await OurStory.findById("ourStory").lean();
     if(!ourStory) {
         throw new ApiError(404, "Our Story page is not found");
     }

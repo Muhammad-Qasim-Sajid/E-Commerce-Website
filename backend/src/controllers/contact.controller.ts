@@ -8,7 +8,7 @@ import { contactPageSchema } from "../types/validation.types.js";
 import { Contact } from "../models/contact.model.js";
 import { MESSAGES_LIMIT } from "../constants.js";
 
-export const addContact  = asyncHandler(async(req: Request, res: Response) => {
+export const addContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
 
     console.log(req.body); // Debug log
 
@@ -26,7 +26,7 @@ export const addContact  = asyncHandler(async(req: Request, res: Response) => {
 
 });
 
-export const editContact  = asyncHandler(async(req: Request, res: Response) => {
+export const editContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) {
         throw new ApiError(400, "ID is required");
@@ -44,7 +44,11 @@ export const editContact  = asyncHandler(async(req: Request, res: Response) => {
     return ApiResponse(res, 200, "Message marked as read", contact);
 });
 
-const fetchContacts = async (filter: Record<string, any>, cursor?: string) => {
+const fetchContacts = async (filter: Record<string, any>, cursor?: string): Promise<{
+    items: any[];
+    hasMore: boolean;
+    nextCursor: Date | null;
+}> => {
     const query: any = { ...filter };
 
     if (cursor) {
@@ -55,7 +59,7 @@ const fetchContacts = async (filter: Record<string, any>, cursor?: string) => {
         query.createdAt = { $lt: date };
     }
 
-    const items = await Contact.find(query).sort({ createdAt: -1 }).limit(MESSAGES_LIMIT + 1);
+    const items = await Contact.find(query).sort({ createdAt: -1 }).limit(MESSAGES_LIMIT + 1).lean();
 
     const hasMore = items.length > MESSAGES_LIMIT;
     if (hasMore) items.pop();
@@ -67,28 +71,28 @@ const fetchContacts = async (filter: Record<string, any>, cursor?: string) => {
     }
 };
 
-export const getAllContacts = asyncHandler(async (req: Request, res: Response) => {
+export const getAllContacts = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const data = await fetchContacts({}, req.query.cursor as string);
     return ApiResponse(res, 200, "Messages retrieved successfully", data);
 });
 
-export const getReadContacts = asyncHandler(async (req: Request, res: Response) => {
+export const getReadContacts = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const data = await fetchContacts({ read: true }, req.query.cursor as string);
     return ApiResponse(res, 200, "Read messages retrieved successfully", data);
 });
 
-export const getUnreadContacts = asyncHandler(async (req: Request, res: Response) => {
+export const getUnreadContacts = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const data = await fetchContacts({ read: false }, req.query.cursor as string);
     return ApiResponse(res, 200, "Unread messages retrieved successfully", data);
 });
 
-export const deleteContact  = asyncHandler(async(req: Request, res: Response) => {
+export const deleteContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) {
         throw new ApiError(400, "ID is required");
     }
 
-    const contact = await Contact.findByIdAndDelete(id);
+    const contact = await Contact.findByIdAndDelete(id).lean();
 
     if (!contact) {
         throw new ApiError(404, "Message not found");
