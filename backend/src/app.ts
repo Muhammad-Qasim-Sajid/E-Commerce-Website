@@ -24,6 +24,7 @@ import contactRouter from "./routes/contact.routes.js";
 import productRouter from "./routes/product.routes.js";
 import shippingPriceRouter from "./routes/shippingPrice.routes.js";
 import orderRouter from "./routes/order.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 
 // Routes declaration
 app.use("/api/v1", homeRouter);
@@ -33,6 +34,7 @@ app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/product", productRouter);
 app.use("/api/v1/shipping-price", shippingPriceRouter);
 app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/admin", adminRouter);
 
 // Global error handler
 app.use(globalErrorHandler);
