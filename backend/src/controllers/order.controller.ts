@@ -47,7 +47,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response): Promis
                         "variants._id": item.variantId 
                     },
                     { name: 1, variants: 1 }
-                ).session(session).lean();
+                ).session(session)
 
                 if (!product) {
                     throw new ApiError(404, "Product or variant not found");
@@ -110,7 +110,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response): Promis
                         shippingPrice,
                         totalPrice: calculatedTotal,
                         paymentStatus: "Pending",
-                        orderStatus: "Processing",
+                        orderStatus: "Pending",
                         trackingToken: "TEMP"
                 }],
                 { session }
@@ -125,7 +125,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response): Promis
         session.endSession();
     }
 
-    const trackingUrl = `${process.env.FRONTEND_URL}/order/track-order?token=${createdOrder.trackingToken}`;
+    const trackingUrl = `${process.env.FRONTEND_URL}/orders/track-order?token=${createdOrder.trackingToken}`;
 
     try {
         await sendEmail({
@@ -222,7 +222,7 @@ export const editOrderStatus = asyncHandler(async (req: Request, res: Response):
     const { orderStatus } = req.body;
     if (!orderStatus) throw new ApiError(400, "Order status is required");
 
-    const validStatuses = ["Processing", "Shipped", "Delivered", "Cancelled"];
+    const validStatuses = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
     if (!validStatuses.includes(orderStatus)) {
         throw new ApiError(400, `Order status must be one of: ${validStatuses.join(", ")}`);
     }

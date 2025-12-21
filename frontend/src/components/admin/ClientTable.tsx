@@ -1,17 +1,16 @@
 'use client';
 
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, Package, Calendar } from 'lucide-react';
 
 type Client = {
-  _id: string;
   name: string;
   email: string;
   phone: string;
   address: string;
   totalSpent: number;
-  totalOrders: number;
-  firstOrder: string;
-  lastOrder: string;
+  orderCount: number;
+  firstOrderDate: string;
+  lastOrderDate: string;
 };
 
 type ClientTableProps = {
@@ -26,40 +25,13 @@ const ClientTable = ({ clients }: ClientTableProps) => {
     })}`;
   };
 
-  // Function to truncate address and show it in 2 lines
-  const formatAddress = (address: string) => {
-    // If address is short, just return it
-    if (address.length <= 40) return address;
-    
-    // Split address by commas for better truncation
-    const parts = address.split(', ');
-    
-    // If we have multiple parts, try to show first 2 parts on first line, rest on second
-    if (parts.length >= 3) {
-      const firstLine = `${parts[0]}, ${parts[1]}`;
-      const secondLine = parts.slice(2).join(', ');
-      return (
-        <>
-          <span className="block">{firstLine},</span>
-          <span className="block">{secondLine}</span>
-        </>
-      );
-    }
-    
-    // For longer single-line addresses, split in the middle
-    const middle = Math.floor(address.length / 2);
-    // Try to find a space near the middle for better word break
-    const breakPoint = address.lastIndexOf(' ', middle);
-    if (breakPoint !== -1) {
-      return (
-        <>
-          <span className="block">{address.substring(0, breakPoint)}</span>
-          <span className="block">{address.substring(breakPoint + 1)}</span>
-        </>
-      );
-    }
-    
-    return address;
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -67,13 +39,13 @@ const ClientTable = ({ clients }: ClientTableProps) => {
       {/* Header */}
       <div className="p-4 sm:p-6 border-b border-[#eae2d6] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#f9f7f3]">
         <div className="text-sm text-[#666666] tracking-tight text-center sm:text-left">
-          {clients.length} Clients total
+          {clients.length} {clients.length === 1 ? 'client' : 'clients'} total
         </div>
       </div>
 
       {/* Clients Table */}
       <div className="overflow-x-auto pb-4">
-        <div className="min-w-[700px] lg:min-w-0">
+        <div className="min-w-[900px] lg:min-w-0">
           <table className="w-full">
             <thead>
               <tr className="bg-[#f9f7f3]">
@@ -86,14 +58,17 @@ const ClientTable = ({ clients }: ClientTableProps) => {
                 <th className="px-4 sm:px-6 py-4 text-xs font-medium text-[#1a1a1a] border-r border-[#eae2d6] text-center whitespace-nowrap">
                   Address
                 </th>
+                <th className="px-4 sm:px-6 py-4 text-xs font-medium text-[#1a1a1a] border-r border-[#eae2d6] text-center whitespace-nowrap">
+                  Orders & Last Order
+                </th>
                 <th className="px-4 sm:px-6 py-4 text-xs font-medium text-[#1a1a1a] text-center whitespace-nowrap">
                   Total Spent
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eae2d6]">
-              {clients.map((client) => (
-                <tr key={client._id}>
+              {clients.map((client, index) => (
+                <tr key={index}>
                   {/* Client Name */}
                   <td className="px-4 sm:px-6 py-4">
                     <div className="text-center">
@@ -105,16 +80,16 @@ const ClientTable = ({ clients }: ClientTableProps) => {
                   
                   {/* Contact Info */}
                   <td className="px-4 sm:px-6 py-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <div className="flex items-center justify-center gap-2">
                         <Mail className="w-3 h-3 text-[#666666] shrink-0" />
-                        <p className="text-xs text-[#1a1a1a] tracking-tight break-all text-center">
+                        <p className="text-[11px] text-[#1a1a1a] tracking-tight break-all">
                           {client.email}
                         </p>
                       </div>
                       <div className="flex items-center justify-center gap-2">
                         <Phone className="w-3 h-3 text-[#666666] shrink-0" />
-                        <p className="text-xs text-[#1a1a1a] tracking-tight">
+                        <p className="text-[11px] text-[#1a1a1a] tracking-tight">
                           {client.phone}
                         </p>
                       </div>
@@ -123,8 +98,26 @@ const ClientTable = ({ clients }: ClientTableProps) => {
                   
                   {/* Address */}
                   <td className="px-4 sm:px-6 py-4">
-                    <div className="text-center text-xs text-[#1a1a1a] wrap-words leading-tight max-w-[200px]">
-                        {formatAddress(client.address)}
+                    <div className="text-center text-[11px] text-[#1a1a1a] leading-tight max-w-[200px] mx-auto">
+                      {client.address}
+                    </div>
+                  </td>
+                  
+                  {/* Orders & Last Order */}
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center gap-2">
+                        <Package className="w-3 h-3 text-[#666666] shrink-0" />
+                        <p className="text-[11px] text-[#1a1a1a] tracking-tight">
+                          {client.orderCount} order{client.orderCount !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <Calendar className="w-3 h-3 text-[#666666] shrink-0" />
+                        <p className="text-[11px] text-[#1a1a1a] tracking-tight">
+                          {formatDate(client.lastOrderDate)}
+                        </p>
+                      </div>
                     </div>
                   </td>
                   
