@@ -1,21 +1,19 @@
-// app/admin/orders/page.tsx
-import OrderTable from '@/components/admin/OrderTable'
-import { Download } from 'lucide-react'
+import OrderTable from '../../../components/admin/OrderTable';
+import { orders } from '../../../data/orders';
 
-export default function AdminOrdersPage() {
+export default function AdminOrders() {
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-          <Download className="w-5 h-5" />
-          Export
-        </button>
-      </div>
-      
-      <div className="card">
-        <OrderTable />
+    <div className="min-h-screen bg-[#eeeceb]">
+      <div className="p-4 pb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <p className="font-['Playfair_Display'] text-2xl sm:text-3xl text-[#1a1a1a] tracking-tight text-center sm:text-left">
+            Orders
+          </p>
+        </div>
+        <div className="bg-white">
+          <OrderTable orders={orders}/>
+        </div>
       </div>
     </div>
-  )
+  );
 }

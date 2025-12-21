@@ -1,7 +1,7 @@
 // app/(store)/checkout/page.tsx
 import CheckoutForm from '@/components/store/CheckoutForm'
 import PriceDisplay from '@/components/store/PriceDisplay'
-import { products } from '@/data/products'
+import { products } from '@/data/collections'
 import { Trash2 } from 'lucide-react'
 
 export default function CheckoutPage() {

@@ -2,179 +2,165 @@ import { Order } from '../lib/types';
 
 export const orders: Order[] = [
   {
-    id: 'CP2024-7890',
-    customer: {
-      id: 'CUST001',
-      name: 'Alex Johnson',
-      email: 'alex.johnson@example.com',
-      phone: '+1 (555) 123-4567',
-    },
+    _id: '1',
+    customerName: 'Alexander Rothschild',
+    customerEmail: 'alex@email.com',
+    customerPhone: '+1234567890',
+    customerAddress: '123 Luxury Street, New York',
     items: [
       {
-        id: 'ITEM001',
-        productId: 1,
-        name: 'Chronograph Pro',
-        variant: 'Silver / Black',
-        price: 1299.99,
+        productId: '1',
+        variantId: '1',
+        variantSnapshot: {
+          name: 'Silver / Black',
+          price: 1299.99,
+          image: '/1.png'
+        },
         quantity: 1,
-        image: 'https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=CP',
-      },
-      {
-        id: 'ITEM002',
-        productId: 3,
-        name: 'Diver Series 300',
-        variant: 'Blue / Steel',
-        price: 1599.99,
-        quantity: 1,
-        image: 'https://via.placeholder.com/100x100/6366F1/FFFFFF?text=DS',
-      },
+        totalPrice: 1299.99,
+        product: {
+          name: 'Chronograph Pro'
+        }
+      }
     ],
-    total: 2899.98,
-    shippingCost: 0,
-    tax: 232.00,
-    status: 'delivered',
-    shippingAddress: {
-      name: 'Alex Johnson',
-      street: '123 Main Street',
-      city: 'New York',
-      state: 'NY',
-      postalCode: '10001',
-      country: 'United States',
-    },
-    createdAt: '2024-01-15',
-    notes: 'Please deliver before 5 PM',
+    shippingPrice: 500,
+    totalPrice: 1799.99,
+    paymentStatus: 'Paid',
+    orderStatus: 'Delivered',
+    shippingTrackingNumber: 'TRK123456789',
+    trackingToken: 'GW-2024-7890',
+    createdAt: '2024-01-15T10:30:00Z'
   },
   {
-    id: 'CP2024-7889',
-    customer: {
-      id: 'CUST002',
-      name: 'Maria Garcia',
-      email: 'maria.garcia@example.com',
-      phone: '+1 (555) 987-6543',
-    },
+    _id: '2',
+    customerName: 'Victoria Chen',
+    customerEmail: 'victoria@email.com',
+    customerPhone: '+1234567891',
+    customerAddress: '456 Elegance Avenue, London',
     items: [
       {
-        id: 'ITEM003',
-        productId: 2,
-        name: 'Classic Dress Watch',
-        variant: 'White / Brown Leather',
-        price: 899.99,
+        productId: '2',
+        variantId: '2',
+        variantSnapshot: {
+          name: 'Rose Gold / Brown',
+          price: 1399.99,
+          image: '/2.png'
+        },
+        quantity: 1,
+        totalPrice: 1399.99,
+        product: {
+          name: 'Classic Dress Watch'
+        }
+      }
+    ],
+    shippingPrice: 500,
+    totalPrice: 1899.99,
+    paymentStatus: 'Pending',
+    orderStatus: 'Confirmed',
+    shippingTrackingNumber: 'TRK123456790',
+    trackingToken: 'GW-2024-7889',
+    createdAt: '2024-01-14T14:45:00Z'
+  },
+  {
+    _id: '3',
+    customerName: 'James Vanderbilt',
+    customerEmail: 'james@email.com',
+    customerPhone: '+1234567892',
+    customerAddress: '789 Prestige Road, Paris',
+    items: [
+      {
+        productId: '3',
+        variantId: '3',
+        variantSnapshot: {
+          name: 'Blue / Steel',
+          price: 1599.99,
+          image: '/3.png'
+        },
         quantity: 2,
-        image: 'https://via.placeholder.com/100x100/10B981/FFFFFF?text=CD',
-      },
+        totalPrice: 3199.98,
+        product: {
+          name: 'Diver Series 300'
+        }
+      }
     ],
-    total: 1799.98,
-    shippingCost: 25.00,
-    tax: 144.00,
-    status: 'processing',
-    shippingAddress: {
-      name: 'Maria Garcia',
-      street: '456 Oak Avenue',
-      city: 'Los Angeles',
-      state: 'CA',
-      postalCode: '90001',
-      country: 'United States',
-    },
-    createdAt: '2024-01-14',
+    shippingPrice: 500,
+    totalPrice: 3699.98,
+    paymentStatus: 'Paid',
+    orderStatus: 'Shipped',
+    shippingTrackingNumber: 'TRK123456791',
+    trackingToken: 'GW-2024-7888',
+    createdAt: '2024-01-13T09:15:00Z'
   },
   {
-    id: 'CP2024-7888',
-    customer: {
-      id: 'CUST003',
-      name: 'David Chen',
-      email: 'david.chen@example.com',
-      phone: '+1 (555) 456-7890',
-    },
+    _id: '4',
+    customerName: 'Isabella Rossi',
+    customerEmail: 'isabella@email.com',
+    customerPhone: '+1234567893',
+    customerAddress: '321 Heritage Lane, Milan',
     items: [
       {
-        id: 'ITEM004',
-        productId: 1,
-        name: 'Chronograph Pro',
-        variant: 'Rose Gold / Brown',
-        price: 1399.99,
+        productId: '1',
+        variantId: '1',
+        variantSnapshot: {
+          name: 'Silver / Black',
+          price: 1299.99,
+          image: '/1.png'
+        },
         quantity: 1,
-        image: 'https://via.placeholder.com/100x100/3B82F6/FFFFFF?text=CP',
+        totalPrice: 1299.99,
+        product: {
+          name: 'Chronograph Pro'
+        }
       },
+      {
+        productId: '2',
+        variantId: '2',
+        variantSnapshot: {
+          name: 'White / Brown Leather',
+          price: 899.99,
+          image: '/4.png'
+        },
+        quantity: 1,
+        totalPrice: 899.99,
+        product: {
+          name: 'Classic Dress Watch'
+        }
+      }
     ],
-    total: 1399.99,
-    shippingCost: 0,
-    tax: 112.00,
-    status: 'shipped',
-    shippingAddress: {
-      name: 'David Chen',
-      street: '789 Pine Road',
-      city: 'Toronto',
-      state: 'ON',
-      postalCode: 'M5H 2N2',
-      country: 'Canada',
-    },
-    createdAt: '2024-01-13',
-    notes: 'Gift wrapping requested',
+    shippingPrice: 500,
+    totalPrice: 2699.98,
+    paymentStatus: 'Failed',
+    orderStatus: 'Cancelled',
+    trackingToken: 'GW-2024-7887',
+    createdAt: '2024-01-12T16:20:00Z'
   },
   {
-    id: 'CP2024-7887',
-    customer: {
-      id: 'CUST004',
-      name: 'Sarah Williams',
-      email: 'sarah.williams@example.com',
-      phone: '+1 (555) 234-5678',
-    },
+    _id: '5',
+    customerName: 'Mohammed Al-Farsi',
+    customerEmail: 'mohammed@email.com',
+    customerPhone: '+1234567894',
+    customerAddress: '654 Royal Boulevard, Dubai',
     items: [
       {
-        id: 'ITEM005',
-        productId: 2,
-        name: 'Classic Dress Watch',
-        variant: 'Black / Black Leather',
-        price: 899.99,
-        quantity: 1,
-        image: 'https://via.placeholder.com/100x100/10B981/FFFFFF?text=CD',
-      },
+        productId: '3',
+        variantId: '3',
+        variantSnapshot: {
+          name: 'Black / Rubber',
+          price: 1499.99,
+          image: '/5.png'
+        },
+        quantity: 3,
+        totalPrice: 4499.97,
+        product: {
+          name: 'Diver Series 300'
+        }
+      }
     ],
-    total: 899.99,
-    shippingCost: 15.00,
-    tax: 72.00,
-    status: 'pending',
-    shippingAddress: {
-      name: 'Sarah Williams',
-      street: '321 Elm Street',
-      city: 'Chicago',
-      state: 'IL',
-      postalCode: '60601',
-      country: 'United States',
-    },
-    createdAt: '2024-01-12',
-  },
-  {
-    id: 'CP2024-7886',
-    customer: {
-      id: 'CUST005',
-      name: 'James Wilson',
-      email: 'james.wilson@example.com',
-      phone: '+44 20 7946 0958',
-    },
-    items: [
-      {
-        id: 'ITEM006',
-        productId: 3,
-        name: 'Diver Series 300',
-        variant: 'Black / Rubber',
-        price: 1499.99,
-        quantity: 1,
-        image: 'https://via.placeholder.com/100x100/6366F1/FFFFFF?text=DS',
-      },
-    ],
-    total: 1499.99,
-    shippingCost: 35.00,
-    tax: 120.00,
-    status: 'cancelled',
-    shippingAddress: {
-      name: 'James Wilson',
-      street: '10 Downing Street',
-      city: 'London',
-      state: 'Greater London',
-      postalCode: 'SW1A 2AA',
-      country: 'United Kingdom',
-    },
-    createdAt: '2024-01-11',
-  },
+    shippingPrice: 500,
+    totalPrice: 4999.97,
+    paymentStatus: 'Paid',
+    orderStatus: 'Pending',
+    trackingToken: 'GW-2024-7886',
+    createdAt: '2024-01-11T11:10:00Z'
+  }
 ];

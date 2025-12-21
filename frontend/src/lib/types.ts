@@ -12,7 +12,7 @@ export interface Variant {
   sku: string
 }
 
-export interface Product {
+export interface Collection {
   id: number
   name: string
   description: string
@@ -34,18 +34,6 @@ export interface Product {
   }
 }
 
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
-
-export interface OrderItem {
-  id: string
-  productId: number
-  name: string
-  variant: string
-  price: number
-  quantity: number
-  image?: string
-}
-
 export interface Customer {
   id: string
   name: string
@@ -62,15 +50,36 @@ export interface ShippingAddress {
   country: string
 }
 
-export interface Order {
-  id: string
-  customer: Customer
-  items: OrderItem[]
-  total: number
-  shippingCost: number
-  tax: number
-  status: OrderStatus
-  shippingAddress: ShippingAddress
-  createdAt: string
-  notes?: string
-}
+export type OrderItem = {
+  productId: string;
+  variantId: string;
+  variantSnapshot: {
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  totalPrice: number;
+  product?: {
+    name: string;
+  };
+};
+
+type OrderStatus = 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
+
+export type Order = {
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
+  items: OrderItem[];
+  shippingPrice: number;
+  totalPrice: number;
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
+  shippingTrackingNumber?: string;
+  trackingToken: string;
+  createdAt: string;
+};

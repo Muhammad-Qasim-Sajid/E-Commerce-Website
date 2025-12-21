@@ -1,19 +1,18 @@
-// app/admin/layout.tsx
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Sidebar from '@/components/admin/Sidebar'
-import Header from '@/components/admin/Header'
+import { useState } from 'react';
+import Sidebar from '../../components/admin/Sidebar';
+import Header from '../../components/admin/Header';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#eeeceb]">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       <div className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
@@ -22,5 +21,5 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
-  )
+  );
 }

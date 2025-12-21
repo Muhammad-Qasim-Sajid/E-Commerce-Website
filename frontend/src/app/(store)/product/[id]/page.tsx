@@ -2,7 +2,7 @@
 import ProductGallery from '@/components/store/ProductGallery'
 import AddToCart from '@/components/store/AddToCart'
 import PriceDisplay from '@/components/store/PriceDisplay'
-import { products } from '@/data/products'
+import { products } from '@/data/collections'
 import { notFound } from 'next/navigation'
 import { Check, Shield, Truck } from 'lucide-react'
 

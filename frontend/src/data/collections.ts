@@ -1,6 +1,6 @@
-import { Product } from '../lib/types';
+import { Collection } from '../lib/types';
 
-export const products: Product[] = [
+export const collections: Collection[] = [
   {
     id: 1,
     name: 'Chronograph Pro',
@@ -11,9 +11,9 @@ export const products: Product[] = [
     sku: 'CP-2024-PRO',
     stock: 42,
     images: [
-      { id: '1', url: 'https://via.placeholder.com/600x600/3B82F6/FFFFFF?text=Chronograph+Pro', alt: 'Chronograph Pro Front' },
-      { id: '2', url: 'https://via.placeholder.com/600x600/3B82F6/FFFFFF?text=Side+View', alt: 'Chronograph Pro Side' },
-      { id: '3', url: 'https://via.placeholder.com/600x600/3B82F6/FFFFFF?text=Wrist+View', alt: 'Chronograph Pro Wrist' },
+      { id: '1', url: '/1.png', alt: 'Chronograph Pro Front' },
+      { id: '2', url: '/2.png', alt: 'Chronograph Pro Side' },
+      { id: '3', url: '/3.png', alt: 'Chronograph Pro Wrist' },
     ],
     variants: [
       { id: '1', name: 'Silver / Black', price: 1299.99, stock: 25, sku: 'CP-PRO-SB' },

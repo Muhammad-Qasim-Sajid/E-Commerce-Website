@@ -2,7 +2,7 @@
 import ProductCard from '@/components/store/ProductCard'
 import Testimonials from '@/components/store/Testimonials'
 import FAQ from '@/components/store/FAQ'
-import { products } from '@/data/products'
+import { collections as products } from '@/data/collections'
 import { ArrowRight, Shield, Truck, Clock } from 'lucide-react'
 import Link from 'next/link'
 
