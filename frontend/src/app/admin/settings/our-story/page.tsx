@@ -1,50 +1,151 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Plus, Trash2 } from 'lucide-react';
+import { z } from 'zod';
+import Spinner from '../../../../components/spinner';
+import { getCsrfToken } from '../../../../lib/utils';
+import { OurStoryData, ourStorySchema } from '../../../../lib/schemas';
 
 export default function EditOurStoryPage() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [storyData, setStoryData] = useState({
+  const [isLoading, setIsLoading] = useState(true);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [storyData, setStoryData] = useState<OurStoryData>({
     _id: 'ourStory',
-    tagline: 'A Legacy of Timekeeping Excellence Since 1895',
+    tagline: '',
     founderQuotes: {
-      founderName: 'Henri Dubois',
-      quotesOfFounder: 'Time is the ultimate luxury. We don\'t just measure it; we celebrate it.'
+      founderName: '',
+      quotesOfFounder: ''
     },
     headPara: [
-      {
-        heading: 'The Beginning',
-        paragraph: 'In the heart of Geneva, 1895, a young watchmaker named Henri Dubois established a small atelier with a singular vision: to create timepieces that would transcend generations.'
-      },
-      {
-        heading: 'The Craftsmanship',
-        paragraph: 'Each watch is a testament to centuries-old techniques, with every component meticulously hand-finished by master artisans who have dedicated their lives to the craft.'
-      },
-      {
-        heading: 'The Innovation',
-        paragraph: 'While honoring tradition, we continually innovate, integrating cutting-edge technology with timeless design to create watches that are both historically significant and forward-looking.'
-      },
-      {
-        heading: 'The Legacy',
-        paragraph: 'Today, our watches are cherished by collectors worldwide, each piece carrying forward the legacy of excellence that began over a century ago.'
-      }
+      { heading: '', paragraph: '' },
+      { heading: '', paragraph: '' },
+      { heading: '', paragraph: '' }
     ]
   });
 
+  useEffect(() => {
+    const loadStoryData = async () => {
+      try {
+        setIsLoading(true);
+        setValidationErrors({});
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/our-story/get`, {
+          credentials: 'include',
+        });
+
+        if (response.status === 404) {
+          setIsLoading(false);
+          return;
+        }
+        
+        if (!response.ok) {
+          throw new Error('Failed to load story data');
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          const storyPageData = data.data;
+          
+          const headParaData = [...storyPageData.headPara];
+          while (headParaData.length < 3) {
+            headParaData.push({ heading: '', paragraph: '' });
+          }
+          
+          setStoryData({
+            _id: storyPageData._id || 'ourStory',
+            tagline: storyPageData.tagline || '',
+            founderQuotes: storyPageData.founderQuotes || { founderName: '', quotesOfFounder: '' },
+            headPara: headParaData
+          });
+        }
+      } catch (error) {
+        console.error('Error loading story data:', error); // Debug log
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStoryData();
+  }, []);
+
+  const validateForm = () => {
+    try {
+      ourStorySchema.parse(storyData);
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: Record<string, string> = {};
+        error.issues.forEach(err => {
+          const path = err.path.join('.');
+          errors[path] = err.message;
+        });
+        setValidationErrors(errors);
+
+        const firstError = Object.values(errors)[0];
+        if (firstError) {
+          alert(firstError);
+        }
+      }
+      return false;
+    }
+  };
+
   const handleSave = async () => {
+    setValidationErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSaving(true);
-    // Add your API call here
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsSaving(false);
+    
+    try {
+      const csrfToken = getCsrfToken();
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/our-story/edit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),
+        },
+        credentials: 'include',
+        body: JSON.stringify(storyData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save story page');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert(data.message || 'Story page saved successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving story page:', error); // Debug log
+      alert(error instanceof Error ? error.message : 'Failed to save story page. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateHeadPara = (index: number, field: 'heading' | 'paragraph', value: string) => {
     const updatedHeadPara = [...storyData.headPara];
     updatedHeadPara[index] = { ...updatedHeadPara[index], [field]: value };
     setStoryData({ ...storyData, headPara: updatedHeadPara });
+    
+    if (validationErrors[`headPara.${index}.${field}`]) {
+      const newErrors = { ...validationErrors };
+      delete newErrors[`headPara.${index}.${field}`];
+      setValidationErrors(newErrors);
+    }
   };
 
   const addHeadPara = () => {
@@ -61,7 +162,48 @@ export default function EditOurStoryPage() {
     }
     const updatedHeadPara = storyData.headPara.filter((_, i) => i !== index);
     setStoryData({ ...storyData, headPara: updatedHeadPara });
+    
+    const newErrors = { ...validationErrors };
+    Object.keys(newErrors).forEach(key => {
+      if (key.startsWith(`headPara.${index}.`)) {
+        delete newErrors[key];
+      } else if (key.startsWith('headPara.') && parseInt(key.split('.')[1]) > index) {
+        const parts = key.split('.');
+        const oldIndex = parseInt(parts[1]);
+        const newKey = `headPara.${oldIndex - 1}.${parts.slice(2).join('.')}`;
+        newErrors[newKey] = newErrors[key];
+        delete newErrors[key];
+      }
+    });
+    setValidationErrors(newErrors);
   };
+
+  const updateField = (field: keyof OurStoryData, value: string) => {
+    setStoryData({ ...storyData, [field]: value });
+    
+    if (validationErrors[field]) {
+      const newErrors = { ...validationErrors };
+      delete newErrors[field];
+      setValidationErrors(newErrors);
+    }
+  };
+
+  const updateFounderQuotes = (field: 'founderName' | 'quotesOfFounder', value: string) => {
+    setStoryData({
+      ...storyData,
+      founderQuotes: { ...storyData.founderQuotes, [field]: value }
+    });
+    
+    if (validationErrors[`founderQuotes.${field}`]) {
+      const newErrors = { ...validationErrors };
+      delete newErrors[`founderQuotes.${field}`];
+      setValidationErrors(newErrors);
+    }
+  };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <div className="min-h-screen bg-[#eeeceb]">
@@ -89,10 +231,13 @@ export default function EditOurStoryPage() {
               <input
                 type="text"
                 value={storyData.tagline}
-                onChange={(e) => setStoryData({ ...storyData, tagline: e.target.value })}
-                className="w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm"
+                onChange={(e) => updateField('tagline', e.target.value)}
+                className={`w-full border ${validationErrors.tagline ? 'border-red-500' : 'border-[#eae2d6]'} bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm`}
                 placeholder="Enter page tagline"
               />
+              {validationErrors.tagline && (
+                <p className="text-xs text-red-500 mt-1">{validationErrors.tagline}</p>
+              )}
             </div>
           </div>
 
@@ -112,13 +257,13 @@ export default function EditOurStoryPage() {
                 <input
                   type="text"
                   value={storyData.founderQuotes.founderName}
-                  onChange={(e) => setStoryData({
-                    ...storyData,
-                    founderQuotes: { ...storyData.founderQuotes, founderName: e.target.value }
-                  })}
-                  className="w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm"
+                  onChange={(e) => updateFounderQuotes('founderName', e.target.value)}
+                  className={`w-full border ${validationErrors['founderQuotes.founderName'] ? 'border-red-500' : 'border-[#eae2d6]'} bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm`}
                   placeholder="Enter founder name"
                 />
+                {validationErrors['founderQuotes.founderName'] && (
+                  <p className="text-xs text-red-500 mt-1">{validationErrors['founderQuotes.founderName']}</p>
+                )}
               </div>
               
               <div>
@@ -127,14 +272,14 @@ export default function EditOurStoryPage() {
                 </label>
                 <textarea
                   value={storyData.founderQuotes.quotesOfFounder}
-                  onChange={(e) => setStoryData({
-                    ...storyData,
-                    founderQuotes: { ...storyData.founderQuotes, quotesOfFounder: e.target.value }
-                  })}
+                  onChange={(e) => updateFounderQuotes('quotesOfFounder', e.target.value)}
                   rows={3}
-                  className="w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm"
+                  className={`w-full border ${validationErrors['founderQuotes.quotesOfFounder'] ? 'border-red-500' : 'border-[#eae2d6]'} bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm`}
                   placeholder="Enter founder's quote"
                 />
+                {validationErrors['founderQuotes.quotesOfFounder'] && (
+                  <p className="text-xs text-red-500 mt-1">{validationErrors['founderQuotes.quotesOfFounder']}</p>
+                )}
               </div>
             </div>
           </div>
@@ -143,9 +288,14 @@ export default function EditOurStoryPage() {
           <div className="bg-white border border-[#eae2d6] mb-6">
             <div className="p-6 border-b border-[#eae2d6] bg-[#f9f7f3]">
               <div className="flex items-center justify-between">
-                <p className="font-['Playfair_Display'] text-xl tracking-tight text-[#1a1a1a]">
-                  Story Sections (Minimum 3 Required)
-                </p>
+                <div>
+                  <p className="font-['Playfair_Display'] text-xl tracking-tight text-[#1a1a1a]">
+                    Story Sections (Minimum 3 Required)
+                  </p>
+                  {validationErrors.headPara && (
+                    <p className="text-xs text-red-500 mt-1">{validationErrors.headPara}</p>
+                  )}
+                </div>
                 <button
                   onClick={addHeadPara}
                   className="flex items-center gap-2 text-sm text-[#1a1a1a] hover:text-[#d4af37] transition-colors cursor-pointer"
@@ -182,9 +332,12 @@ export default function EditOurStoryPage() {
                         type="text"
                         value={section.heading}
                         onChange={(e) => updateHeadPara(index, 'heading', e.target.value)}
-                        className="w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm"
+                        className={`w-full border ${validationErrors[`headPara.${index}.heading`] ? 'border-red-500' : 'border-[#eae2d6]'} bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm`}
                         placeholder="Enter section heading"
                       />
+                      {validationErrors[`headPara.${index}.heading`] && (
+                        <p className="text-xs text-red-500 mt-1">{validationErrors[`headPara.${index}.heading`]}</p>
+                      )}
                     </div>
                     
                     <div>
@@ -195,9 +348,12 @@ export default function EditOurStoryPage() {
                         value={section.paragraph}
                         onChange={(e) => updateHeadPara(index, 'paragraph', e.target.value)}
                         rows={4}
-                        className="w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm resize-none"
+                        className={`w-full border ${validationErrors[`headPara.${index}.paragraph`] ? 'border-red-500' : 'border-[#eae2d6]'} bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors text-sm resize-none`}
                         placeholder="Enter section paragraph"
                       />
+                      {validationErrors[`headPara.${index}.paragraph`] && (
+                        <p className="text-xs text-red-500 mt-1">{validationErrors[`headPara.${index}.paragraph`]}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -209,7 +365,8 @@ export default function EditOurStoryPage() {
           <div className="flex items-center justify-end gap-4">
             <button
               onClick={() => router.back()}
-              className="px-6 py-3 text-sm border border-[#eae2d6] text-[#666666] hover:bg-[#f9f7f3] transition-colors cursor-pointer"
+              disabled={isSaving}
+              className="px-6 py-3 text-sm border border-[#eae2d6] text-[#666666] hover:bg-[#f9f7f3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Cancel
             </button>
@@ -218,8 +375,17 @@ export default function EditOurStoryPage() {
               disabled={isSaving}
               className="flex items-center gap-2 px-6 py-3 text-sm bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save
+                </>
+              )}
             </button>
           </div>
         </div>

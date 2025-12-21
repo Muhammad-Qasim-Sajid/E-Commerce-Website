@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Watch } from 'lucide-react';
 import { adminLoginSchema, type AdminLoginData } from '../../lib/schemas';
 import { adminLogin, isAdmin } from '../../lib/api/adminAPIs';
-import Spinner from '@/components/spinner';
+import Spinner from '../../components/spinner';
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState<AdminLoginData>({

@@ -1,3 +1,5 @@
+import { getCsrfToken } from "../utils";
+
 export async function adminLogin(data: { email: string; password: string }) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/login`, {
         method: 'POST',
@@ -15,14 +17,19 @@ export async function adminLogin(data: { email: string; password: string }) {
 }
 
 export async function adminLogout() {
+    const csrfToken = getCsrfToken();
+
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/logout`, {
         method: "POST",
+        headers: {
+            ...(csrfToken && { 'x-csrf-token': csrfToken })
+        },
         credentials: 'include',
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Logout failed');
+    const error = await response.json();
+    throw new Error(error.message || 'Logout failed');
     }
 
     return response.json();

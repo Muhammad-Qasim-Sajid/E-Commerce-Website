@@ -5,7 +5,7 @@ import { csrfProtect } from "../middlewares/csrfProtect.middleware.js";
 
 const router = Router();
 
-router.route("/edit-faqs").post(adminAuth, csrfProtect, editFaqs);
-router.route("/get-faqs").get(getFaqs);
+router.route("/edit").post(adminAuth, csrfProtect, editFaqs);
+router.route("/get").get(getFaqs);
 
 export default router;
