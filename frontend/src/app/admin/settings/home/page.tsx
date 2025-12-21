@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Upload, X } from 'lucide-react';
 import { z } from 'zod';
-import Spinner from '../../../../components/spinner';
+import Spinner from '../../../../components/Spinner';
 import { getCsrfToken } from '../../../../lib/utils';
 import { HomeData, homePageSchema } from '../../../../lib/schemas';
 

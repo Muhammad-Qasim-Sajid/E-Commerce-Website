@@ -56,3 +56,34 @@ export const faqsSchema = z.object({
   faqs: z.array(faqItemSchema).min(1, "At least 1 FAQ is required")
 });
 export type FAQsData = z.infer<typeof faqsSchema>;
+
+
+
+const variantSchema = z.object({
+  variantName: z.string().min(1, "Variant name is required"),
+  variantPrice: z.coerce.number().min(1, "Variant price is required"),
+  variantPreviousPrice: z.coerce.number().optional(),
+  variantOrder: z.coerce.number().int().min(1, "Variant order is required"),
+  variantStock: z.coerce.number().int().min(0, "Variant stock cannot be negative"),
+}).refine(
+  (data) => {
+    if (data.variantPreviousPrice && data.variantPrice) {
+      return data.variantPreviousPrice > data.variantPrice;
+    }
+    return true;
+  },
+  {
+    message: "Variant previous price must be greater than variant price",
+    path: ["variantPreviousPrice"],
+  }
+);
+export const productSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  smallDescription: z.string()
+    .min(1, "Small description is required")
+    .max(100, "Small description should not exceed 100 characters"),
+  longDescription: z.string()
+    .min(300, "Long description should be at least 300 characters"),
+  featuredProduct: z.boolean().default(false),
+  variants: z.array(variantSchema).min(1, "At least 1 variant is required"),
+});

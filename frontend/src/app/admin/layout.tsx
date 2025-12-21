@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '../../components/admin/Sidebar';
 import Header from '../../components/admin/Header';
-import Spinner from '../../components/spinner';
+import Spinner from '../../components/Spinner';
 import { isAdmin } from '../../lib/api/adminAPIs';
 
 export default function AdminLayout({

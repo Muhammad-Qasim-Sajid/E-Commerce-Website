@@ -26,7 +26,7 @@ export const addContact = asyncHandler(async (req: Request, res: Response): Prom
 
 });
 
-export const editContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+export const markReadContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     if (!id) {
         throw new ApiError(400, "ID is required");
@@ -42,6 +42,24 @@ export const editContact = asyncHandler(async (req: Request, res: Response): Pro
     }
 
     return ApiResponse(res, 200, "Message marked as read", contact);
+});
+
+export const markUnreadContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+    if (!id) {
+        throw new ApiError(400, "ID is required");
+    }
+
+    const contact = await Contact.findByIdAndUpdate(
+        id,
+        { read: false },
+        { new: true }
+    );
+    if (!contact) {
+        throw new ApiError(404, "Message not found");
+    }
+
+    return ApiResponse(res, 200, "Message marked as Unread", contact);
 });
 
 const fetchContacts = async (filter: Record<string, any>, cursor?: string): Promise<{

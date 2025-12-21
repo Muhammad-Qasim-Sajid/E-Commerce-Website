@@ -74,21 +74,23 @@ app.use("/api", rateLimit({
 import homeRouter from "./routes/home.routes.js";
 import ourStoryRouter from "./routes/ourStory.route.js";
 import faqsRouter from "./routes/faqs.routes.js";
-import contactRouter from "./routes/contact.routes.js";
-import productRouter from "./routes/product.routes.js";
+import contactRouter from "./routes/contacts.routes.js";
+import productRouter from "./routes/products.routes.js";
 import shippingPriceRouter from "./routes/shippingPrice.routes.js";
-import orderRouter from "./routes/order.routes.js";
+import orderRouter from "./routes/orders.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import clientRouter from "./routes/clients.routes.js";
 
 // Routes declaration
 app.use("/api/v1", homeRouter);
 app.use("/api/v1/our-story", ourStoryRouter);
 app.use("/api/v1/faqs", faqsRouter);
-app.use("/api/v1/contact", contactRouter);
-app.use("/api/v1/product", productRouter);
+app.use("/api/v1/contacts", contactRouter);
+app.use("/api/v1/products", productRouter);
 app.use("/api/v1/shipping-price", shippingPriceRouter);
-app.use("/api/v1/order", orderRouter);
+app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/clients", clientRouter);
 
 // Global error handler
 app.use(globalErrorHandler);

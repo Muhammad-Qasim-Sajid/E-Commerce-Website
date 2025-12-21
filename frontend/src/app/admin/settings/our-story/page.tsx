@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import { z } from 'zod';
-import Spinner from '../../../../components/spinner';
+import Spinner from '../../../../components/Spinner';
 import { getCsrfToken } from '../../../../lib/utils';
 import { OurStoryData, ourStorySchema } from '../../../../lib/schemas';
 
