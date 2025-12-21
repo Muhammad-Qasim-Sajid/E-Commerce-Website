@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '../../components/admin/Sidebar';
 import Header from '../../components/admin/Header';
+import Spinner from '../../components/spinner';
+import { isAdmin } from '../../lib/api/adminAPIs';
 
 export default function AdminLayout({
   children,
@@ -10,6 +13,39 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await isAdmin();
+        if (response.success) {
+          setIsAuthenticated(true);
+          setIsLoading(false);
+        } else {
+          router.push('/admin-login');
+        }
+      } catch {
+        router.push('/admin-login');
+      }
+    };
+
+    checkAuth();
+  }, [router, pathname]);
+
+  if (isLoading) {
+    return (
+      <Spinner />
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="min-h-screen bg-[#eeeceb]">

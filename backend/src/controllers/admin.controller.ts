@@ -5,6 +5,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import asyncHandler from "../utils/asyncHandler.utils.js";
+import ApiError from "../utils/apiError.utils.js";
 import ApiResponse from "../utils/apiResponse.utils.js";
 import { Admin } from "../models/admin.model.js";
 
@@ -50,7 +51,7 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response): Prom
         .cookie("csrfToken", csrfToken, {
             httpOnly: false,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "lax",
             path: "/",
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
@@ -60,12 +61,12 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response): Prom
 
 export const isAdmin = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const token = req.cookies?.adminToken;
-    if (!token) return ApiResponse(res, 401, "Unauthorized");
+    if (!token) throw new ApiError(401, "Unauthorized");
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
     const admin = await Admin.findById(decoded.id).lean();
 
-    if (!admin) return ApiResponse(res, 401, "Unauthorized");
+    if (!admin) throw new ApiError(401, "Unauthorized");
 
     return ApiResponse(res, 200, "Authorized");
 });
