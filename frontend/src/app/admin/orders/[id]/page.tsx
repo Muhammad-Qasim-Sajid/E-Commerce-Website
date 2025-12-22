@@ -1,57 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Calendar, Mail, Phone, MapPin, Package, Truck } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { orderApi } from '../../../../lib/api/orderAPIs';
+import Spinner from '../../../../components/Spinner';
 
-const orderData = {
-  _id: '1',
-  customerName: 'Alexander Rothschild',
-  customerEmail: 'alex@email.com',
-  customerPhone: '+1234567890',
-  customerAddress: '123 Luxury Street, Manhattan, New York, NY 10001, United States',
-  items: [
-    {
-      productId: '1',
-      variantId: '1',
-      variantSnapshot: {
-        name: 'Silver / Black',
-        price: 1299.99,
-        image: '/1.png'
-      },
-      quantity: 1,
-      totalPrice: 1299.99,
-      product: {
-        name: 'Chronograph Pro'
-      }
-    },
-    {
-      productId: '2',
-      variantId: '2',
-      variantSnapshot: {
-        name: 'Rose Gold / Brown',
-        price: 1399.99,
-        image: '/2.png'
-      },
-      quantity: 1,
-      totalPrice: 1399.99,
-      product: {
-        name: 'Classic Dress Watch'
-      }
-    }
-  ],
-  shippingPrice: 500,
-  totalPrice: 3199.98,
-  paymentStatus: 'Paid',
-  orderStatus: 'Delivered',
-  shippingTrackingNumber: 'TRK123456789',
-  trackingToken: 'GW-2024-7890',
-  createdAt: '2024-01-15T10:30:00Z'
-};
+export interface OrderItem {
+  productId: string;
+  variantId: string;
+  variantSnapshot: {
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  totalPrice: number;
+  product?: {
+    name: string;
+  };
+}
+
+export interface Order {
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
+  items: OrderItem[];
+  shippingPrice: number;
+  totalPrice: number;
+  paymentStatus: 'Pending' | 'Paid' | 'Failed';
+  orderStatus: 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippingTrackingNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function OrderDetailPage() {
-  const [order, setOrder] = useState(orderData);
-  
-  // Format date
+  const params = useParams();
+  const orderId = params.id as string;
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    fetchOrder();
+  }, [orderId]);
+
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await orderApi.getOrder(orderId);
+      
+      if (data.success) {
+        setOrder(data.data);
+      } else {
+        setError(data.message || 'Failed to load order');
+      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to load order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -64,7 +81,6 @@ export default function OrderDetailPage() {
     });
   };
 
-  // Format price
   const formatPrice = (price: number) => {
     return `PKR ${price.toLocaleString('en-PK', {
       minimumFractionDigits: 0,
@@ -72,15 +88,41 @@ export default function OrderDetailPage() {
     })}`;
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb]">
+        <div className="p-4 pb-8">
+          <div className="bg-white p-8 text-center">
+            <p className="text-red-600 mb-2">{error || 'Order not found'}</p>
+            <button
+              onClick={fetchOrder}
+              className="px-4 py-2 bg-[#1a1a1a] text-white hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#eeeceb]">
-      <div className="p-4 pb-8">
+      <div className="sm:p-4 p-0 pb-8">
         {/* Order Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <p className="font-['Playfair_Display'] text-3xl text-[#1a1a1a] tracking-tight mb-2">
-                Order #{order._id}
+              <p className="font-['Playfair_Display'] text-3xl text-[#1a1a1a] tracking-tight mb-2 break-all">
+                Order <span className='italic'>#{order._id}</span>
               </p>
               <div className="flex items-center gap-2 text-[#666666]">
                 <Calendar className="w-4 h-4" />
@@ -126,14 +168,13 @@ export default function OrderDetailPage() {
                 </p>
               </div>
               <div className="p-6">
-                {/* Add scrollable container for small screens */}
                 <div className="overflow-x-auto -mx-6 px-6 pb-6 sm:mx-0 sm:px-0 sm:overflow-visible">
                   <div className="min-w-[600px] sm:min-w-0">
                     <div className="space-y-6">
                       {order.items.map((item, index) => (
                         <div key={index} className="flex items-start gap-4 pb-6 border-b border-[#eae2d6] last:border-0 last:pb-0">
-                          {/* Photo on the left */}
                           <div className="w-24 h-24 bg-[#eeeceb] overflow-hidden border border-[#eae2d6] shrink-0">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={item.variantSnapshot.image}
                               alt={item.product?.name || 'Product'}
@@ -141,13 +182,12 @@ export default function OrderDetailPage() {
                             />
                           </div>
                           
-                          {/* Product details in the middle (name, variant, quantity) */}
                           <div className="flex-1 mt-1">
                             <div>
                               <p className="font-['Playfair_Display'] text-[#1a1a1a] tracking-tight">
-                                {item.product?.name}
+                                {item.product?.name || 'Product'}
                               </p>
-                              <p className="text-sm text-[#666666] mt-1">Variant: {item.variantSnapshot.name}</p>
+                              <p className="text-sm text-[#666666] mt-1">{item.variantSnapshot.name}</p>
                               <div className="mt-2">
                                 <div className="text-sm text-[#666666]">
                                   Quantity: <span className="text-[#1a1a1a] font-medium">{item.quantity}</span>
@@ -156,7 +196,6 @@ export default function OrderDetailPage() {
                             </div>
                           </div>
                           
-                          {/* Prices on the right */}
                           <div className="text-right shrink-0">
                             <div className="mb-4">
                               <p className="text-sm text-[#666666] -mb-0.1">Unit Price</p>
@@ -187,7 +226,7 @@ export default function OrderDetailPage() {
                 </p>
               </div>
               <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="overflow-x-auto grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
                       <div className="bg-[#f9f7f3] border border-[#eae2d6] p-2">
@@ -195,7 +234,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className="text-xs text-[#666666]">Name</p>
-                        <p className="font-medium text-sm sm:text-base text-[#1a1a1a] tracking-tight">{order.customerName}</p>
+                        <p className="text-sm text-[#1a1a1a] tracking-tight leading-tight">{order.customerName}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -204,7 +243,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className="text-xs text-[#666666]">Email</p>
-                        <p className="font-medium text-sm sm:text-base text-[#1a1a1a] tracking-tight">{order.customerEmail}</p>
+                        <p className="text-sm text-[#1a1a1a] tracking-tight leading-tight">{order.customerEmail}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -213,7 +252,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className="text-xs text-[#666666]">Phone</p>
-                        <p className="font-medium text-sm sm:text-base text-[#1a1a1a] tracking-tight">{order.customerPhone}</p>
+                        <p className="text-sm text-[#1a1a1a] tracking-tight leading-tight">{order.customerPhone}</p>
                       </div>
                     </div>
                   </div>
@@ -223,7 +262,7 @@ export default function OrderDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs text-[#666666] mb-1">Shipping Address</p>
-                      <p className="font-medium text-sm sm:text-base text-[#1a1a1a] tracking-tight">
+                      <p className="text-sm text-[#1a1a1a] tracking-tight leading-tight">
                         {order.customerAddress}
                       </p>
                     </div>
@@ -243,7 +282,7 @@ export default function OrderDetailPage() {
                 </p>
               </div>
               <div className="p-6">
-                <div className="space-y-3 sm:text-base text-sm">
+                <div className="overflow-x-auto space-y-3 text-sm">
                   <div className="flex justify-between text-[#666666]">
                     <span>Subtotal</span>
                     <span>{formatPrice(order.items.reduce((sum, item) => sum + item.totalPrice, 0))}</span>
@@ -254,8 +293,8 @@ export default function OrderDetailPage() {
                   </div>
                   <div className="pt-3 border-t border-[#eae2d6]">
                     <div className="flex justify-between items-center">
-                      <span className="font-['Playfair_Display'] sm:text-lg text-base text-[#1a1a1a]">Total</span>
-                      <span className="font-['Playfair_Display'] sm:text-2xl text-xl text-[#1a1a1a]">
+                      <span className="font-['Playfair_Display'] text-base text-[#1a1a1a]">Total</span>
+                      <span className="font-['Playfair_Display'] text-lg text-[#1a1a1a]">
                         {formatPrice(order.totalPrice)}
                       </span>
                     </div>
@@ -272,15 +311,15 @@ export default function OrderDetailPage() {
                 </p>
               </div>
               <div className="p-6">
-                <div className="space-y-4">
+                <div className="overflow-x-auto space-y-4">
                   {order.shippingTrackingNumber ? (
                     <div className="flex items-start gap-3">
                       <div className="bg-[#f9f7f3] border border-[#eae2d6] p-2 rounded">
                         <Truck className="w-4 h-4 text-[#666666]" />
                       </div>
                       <div>
-                        <p className="text-xs text-[#666666]">Tracking Number</p>
-                        <p className="font-medium text-[#1a1a1a] tracking-tight">{order.shippingTrackingNumber}</p>
+                        <p className="text-xs text-[#666666] mb-0.5">Tracking Number</p>
+                        <p className="text-sm text-[#1a1a1a] tracking-tight leading-tight">{order.shippingTrackingNumber}</p>
                       </div>
                     </div>
                   ) : (
@@ -290,7 +329,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className="text-xs text-[#666666]">Status</p>
-                        <p className="font-medium text-[#1a1a1a] tracking-tight">Preparing for shipment</p>
+                        <p className="text-sm text-[#1a1a1a] tracking-tight leading-tight">Preparing for shipment</p>
                       </div>
                     </div>
                   )}

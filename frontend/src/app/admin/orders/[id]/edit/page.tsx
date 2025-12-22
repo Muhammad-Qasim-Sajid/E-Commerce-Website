@@ -1,70 +1,175 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Truck, CreditCard, Package } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { orderApi } from '../../../../../lib/api/orderAPIs';
+import Spinner from '../../../../../components/Spinner';
+
+export interface OrderItem {
+  productId: string;
+  variantId: string;
+  variantSnapshot: {
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  totalPrice: number;
+  product?: {
+    name: string;
+  };
+}
+
+export interface Order {
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
+  items: OrderItem[];
+  shippingPrice: number;
+  totalPrice: number;
+  paymentStatus: 'Pending' | 'Paid' | 'Failed';
+  orderStatus: 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippingTrackingNumber?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function OrderEdit() {
+  const params = useParams();
+  const orderId = params.id as string;
   
-  const [order, setOrder] = useState({
-    _id: '1',
-    customerName: 'Alexander Rothschild',
-    orderStatus: 'Processing',
-    paymentStatus: 'Paid',
-    shippingTrackingNumber: 'TRK123456789',
-    trackingToken: 'GW-2024-7890',
-    totalPrice: 3199.98,
-    createdAt: '2024-01-15T10:30:00Z'
-  });
-
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState({
     orderStatus: false,
     paymentStatus: false,
     shippingTracking: false
   });
 
-  // Order status options
   const orderStatusOptions = [
     { value: 'Pending', label: 'Pending' },
-    { value: 'Processing', label: 'Processing' },
     { value: 'Confirmed', label: 'Confirmed' },
     { value: 'Shipped', label: 'Shipped' },
     { value: 'Delivered', label: 'Delivered' },
-    { value: 'Cancelled', label: 'Cancelled' },
-    { value: 'Refunded', label: 'Refunded' }
+    { value: 'Cancelled', label: 'Cancelled' }
   ];
 
-  // Payment status options
   const paymentStatusOptions = [
     { value: 'Pending', label: 'Pending' },
     { value: 'Paid', label: 'Paid' },
-    { value: 'Failed', label: 'Failed' },
-    { value: 'Refunded', label: 'Refunded' },
-    { value: 'Partially Refunded', label: 'Partially Refunded' }
+    { value: 'Failed', label: 'Failed' }
   ];
 
-  const handleSaveOrderStatus = () => {
-    setSaving({ ...saving, orderStatus: true });
-    // Add your API call here
-    setTimeout(() => {
+  useEffect(() => {
+    fetchOrder();
+  }, [orderId]);
+
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await orderApi.getOrder(orderId);
+      
+      if (data.success) {
+        setOrder(data.data);
+      } else {
+        setError(data.message || 'Failed to load order');
+      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to load order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveOrderStatus = async () => {
+    if (!order) return;
+    try {
+      setSaving({ ...saving, orderStatus: true });
+      const data = await orderApi.updateOrderStatus(order._id, order.orderStatus);
+      if (data.success) {
+        alert('Order status updated successfully');
+      } else {
+        alert(data.message || 'Failed to update order status');
+      }
+    } catch (err) {
+      const error = err as Error;
+      alert(error.message || 'Failed to update order status');
+    } finally {
       setSaving({ ...saving, orderStatus: false });
-    }, 1000);
+    }
   };
 
-  const handleSavePaymentStatus = () => {
-    setSaving({ ...saving, paymentStatus: true });
-    // Add your API call here
-    setTimeout(() => {
+  const handleSavePaymentStatus = async () => {
+    if (!order) return;
+    try {
+      setSaving({ ...saving, paymentStatus: true });
+      const data = await orderApi.updatePaymentStatus(order._id, order.paymentStatus);
+      if (data.success) {
+        alert('Payment status updated successfully');
+      } else {
+        alert(data.message || 'Failed to update payment status');
+      }
+    } catch (err) {
+      const error = err as Error;
+      alert(error.message || 'Failed to update payment status');
+    } finally {
       setSaving({ ...saving, paymentStatus: false });
-    }, 1000);
+    }
   };
 
-  const handleSaveShippingTracking = () => {
-    setSaving({ ...saving, shippingTracking: true });
-    // Add your API call here
-    setTimeout(() => {
+  const handleSaveShippingTracking = async () => {
+    if (!order) return;
+    try {
+      setSaving({ ...saving, shippingTracking: true });
+      const data = await orderApi.updateShippingTracking(
+        order._id, 
+        order.shippingTrackingNumber || ''
+      );
+      if (data.success) {
+        alert('Shipping tracking updated successfully');
+      } else {
+        alert(data.message || 'Failed to update shipping tracking');
+      }
+    } catch (err) {
+      const error = err as Error;
+      alert(error.message || 'Failed to update shipping tracking');
+    } finally {
       setSaving({ ...saving, shippingTracking: false });
-    }, 1000);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb]">
+        <div className="p-4 pb-8">
+          <div className="bg-white p-8 text-center">
+            <p className="text-red-600 mb-2">{error || 'Order not found'}</p>
+            <button
+              onClick={fetchOrder}
+              className="px-4 py-2 bg-[#1a1a1a] text-white hover:opacity-90 transition-opacity cursor-pointer mr-2"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#eeeceb]">
@@ -73,11 +178,11 @@ export default function OrderEdit() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="font-['Playfair_Display'] text-3xl text-[#1a1a1a] tracking-tight mb-2">
-                Edit Order #{order._id}
+              <p className="font-['Playfair_Display'] text-3xl text-[#1a1a1a] tracking-tight mb-2 break-all">
+                Edit Order <span className='italic'>#{order._id}</span>
               </p>
-              <div className="text-[#666666]">
-                <span className="text-sm">Client: {order.customerName}</span>
+              <div className="text-[#666666] text-xl italic tracking-tight font-['Playfair_Display']">
+                {order.customerName}
               </div>
             </div>
           </div>
@@ -107,7 +212,7 @@ export default function OrderEdit() {
                 <div className="flex-1 max-w-md">
                   <select
                     value={order.orderStatus}
-                    onChange={(e) => setOrder({...order, orderStatus: e.target.value})}
+                    onChange={(e) => setOrder({...order, orderStatus: e.target.value as any})}
                     className="sm:text-base text-sm w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none"
                   >
                     {orderStatusOptions.map((option) => (
@@ -120,7 +225,7 @@ export default function OrderEdit() {
                 <button
                   onClick={handleSaveOrderStatus}
                   disabled={saving.orderStatus}
-                  className="flex items-center gap-2 px-6 py-3 sm:text-sm text-xs bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 py-3 sm:text-sm text-xs bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {saving.orderStatus ? 'Saving...' : 'Save'}
                 </button>
@@ -150,7 +255,7 @@ export default function OrderEdit() {
                 <div className="flex-1 max-w-md">
                   <select
                     value={order.paymentStatus}
-                    onChange={(e) => setOrder({...order, paymentStatus: e.target.value})}
+                    onChange={(e) => setOrder({...order, paymentStatus: e.target.value as any})}
                     className="sm:text-base text-sm w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none"
                   >
                     {paymentStatusOptions.map((option) => (
@@ -163,7 +268,7 @@ export default function OrderEdit() {
                 <button
                   onClick={handleSavePaymentStatus}
                   disabled={saving.paymentStatus}
-                  className="flex items-center gap-2 px-6 py-3 sm:text-sm text-xs bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-6 py-3 sm:text-sm text-xs bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {saving.paymentStatus ? 'Saving...' : 'Save'}
                 </button>
@@ -193,18 +298,18 @@ export default function OrderEdit() {
                 <div className="flex-1 max-w-md">
                   <input
                     type="text"
-                    value={order.shippingTrackingNumber}
+                    value={order.shippingTrackingNumber || ''}
                     onChange={(e) => setOrder({...order, shippingTrackingNumber: e.target.value})}
                     className="w-full sm:text-base text-sm border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors"
                     placeholder="Enter tracking number"
                   />
                 </div>
                 <button
-                onClick={handleSaveShippingTracking}
-                disabled={saving.shippingTracking}
-                className="flex items-center gap-2 px-6 py-3 sm:text-sm text-xs bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSaveShippingTracking}
+                  disabled={saving.shippingTracking}
+                  className="flex items-center gap-2 px-6 py-3 sm:text-sm text-xs bg-[#1a1a1a] text-white hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                {saving.shippingTracking ? 'Saving...' : 'Save'}
+                  {saving.shippingTracking ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>

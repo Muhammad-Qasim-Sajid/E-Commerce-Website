@@ -206,13 +206,15 @@ export const editPaymentStatus = asyncHandler(async (req: Request, res: Response
     if (!order) throw new ApiError(404, "Order not found");
 
     if (order.paymentStatus === paymentStatus) {
-        return ApiResponse(res, 200, "Payment status is already up-to-date", order);
+        const { trackingToken, ...orderWithoutToken } = order.toObject();
+        return ApiResponse(res, 200, "Payment status is already up-to-date", orderWithoutToken);
     }
 
     order.paymentStatus = paymentStatus;
     await order.save();
 
-    return ApiResponse(res, 200, "Payment status updated successfully", order);
+    const { trackingToken, ...orderWithoutToken } = order.toObject();
+    return ApiResponse(res, 200, "Payment status updated successfully", orderWithoutToken);
 });
 
 export const editOrderStatus = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
@@ -231,13 +233,15 @@ export const editOrderStatus = asyncHandler(async (req: Request, res: Response):
     if (!order) throw new ApiError(404, "Order not found");
 
     if (order.orderStatus === orderStatus) {
-        return ApiResponse(res, 200, "Order status is already up-to-date", order);
+        const { trackingToken, ...orderWithoutToken } = order.toObject();
+        return ApiResponse(res, 200, "Order status is already up-to-date", orderWithoutToken);
     }
 
     order.orderStatus = orderStatus;
     await order.save();
 
-    return ApiResponse(res, 200, "Order status updated successfully", order);
+    const { trackingToken, ...orderWithoutToken } = order.toObject();
+    return ApiResponse(res, 200, "Order status updated successfully", orderWithoutToken);
 });
 
 export const editShippingTrackingNumber = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
@@ -253,13 +257,15 @@ export const editShippingTrackingNumber = asyncHandler(async (req: Request, res:
     if (!order) throw new ApiError(404, "Order not found");
 
     if (order.shippingTrackingNumber === shippingTrackingNumber) {
-        return ApiResponse(res, 200, "Shipping tracking number is already up-to-date", order);
+        const { trackingToken, ...orderWithoutToken } = order.toObject();
+        return ApiResponse(res, 200, "Shipping tracking number is already up-to-date", orderWithoutToken);
     }
 
     order.shippingTrackingNumber = shippingTrackingNumber;
     await order.save();
 
-    return ApiResponse(res, 200, "Shipping tracking number updated successfully", order);
+    const { trackingToken, ...orderWithoutToken } = order.toObject();
+    return ApiResponse(res, 200, "Shipping tracking number updated successfully", orderWithoutToken);
 });
 
 export const getOrder = asyncHandler(async(req: Request, res: Response): Promise<Response> => {
@@ -273,7 +279,9 @@ export const getOrder = asyncHandler(async(req: Request, res: Response): Promise
     if (!order) {
         throw new ApiError(404, "Order not found");
     }
-    return ApiResponse(res, 200, "Order retrieved successfully", order);
+
+    const { trackingToken, ...orderWithoutToken } = order;
+    return ApiResponse(res, 200, "Order retrieved successfully", orderWithoutToken);
 });
 
 const fetchOrders = async (filter: Record<string, any>, cursor?: string): Promise<{
@@ -300,8 +308,13 @@ const fetchOrders = async (filter: Record<string, any>, cursor?: string): Promis
     const hasMore = orders.length > ORDERS_LIMIT;
     if (hasMore) orders.pop();
 
+    const ordersWithoutToken = orders.map(order => {
+        const { trackingToken, ...orderWithoutToken } = order;
+        return orderWithoutToken;
+    });
+
     return {
-        orders,
+        orders: ordersWithoutToken,
         hasMore,
         nextCursor: orders.length ? orders[orders.length - 1].createdAt : null
     }
@@ -319,5 +332,6 @@ export const deleteOrder = asyncHandler(async(req: Request, res: Response): Prom
     const order = await Order.findByIdAndDelete(id).lean();
     if (!order) throw new ApiError(404, "Order not found");
 
-    return ApiResponse(res, 200, "Order deleted successfully", order);
+    const { trackingToken, ...orderWithoutToken } = order;
+    return ApiResponse(res, 200, "Order deleted successfully", orderWithoutToken);
 });

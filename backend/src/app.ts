@@ -80,6 +80,7 @@ import shippingPriceRouter from "./routes/shippingPrice.routes.js";
 import orderRouter from "./routes/orders.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import clientRouter from "./routes/clients.routes.js";
+import dashboardRouter from "./routes/dashboard.routes.js";
 
 // Routes declaration
 app.use("/api/v1", homeRouter);
@@ -91,6 +92,7 @@ app.use("/api/v1/shipping-price", shippingPriceRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/clients", clientRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
 
 // Global error handler
 app.use(globalErrorHandler);

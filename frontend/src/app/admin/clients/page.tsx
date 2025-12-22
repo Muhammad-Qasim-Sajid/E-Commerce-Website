@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ClientTable from '../../../components/admin/ClientTable';
 import Spinner from '../../../components/Spinner';
+import { getCsrfToken } from '@/lib/utils';
 
 type Client = {
   name: string;
@@ -28,9 +29,13 @@ export default function AdminClients() {
     try {
       setLoading(true);
       setError(null);
-      
+
+      const csrfToken = getCsrfToken();
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients/get`, {
         credentials: 'include',
+        headers: {
+              ...(csrfToken && { 'X-CSRF-Token': csrfToken })
+            },
       });
 
       if (!response.ok) {

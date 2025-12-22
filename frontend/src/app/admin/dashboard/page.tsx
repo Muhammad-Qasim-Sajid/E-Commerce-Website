@@ -270,9 +270,6 @@ export default function AdminDashboard() {
                       <div>
                         <div className="flex items-center gap-2 mb-1.5">
                           <p className="font-['Playfair_Display'] text-[#1a1a1a] tracking-tight">{collection.name}</p>
-                          <span className="text-xs px-2 py-0.5 tracking-tight bg-[#f9f7f3] text-[#666666] border border-[#eae2d6]">
-                            {collection.variant}
-                          </span>
                         </div>
                         <p className="text-xs text-[#666666]">{collection.sales} pieces sold</p>
                       </div>

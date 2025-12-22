@@ -10,8 +10,8 @@ router.route("/track-order").get(trackOrder);
 router.route("/edit-payment-status/:id").patch(adminAuth, csrfProtect, editPaymentStatus);
 router.route("/edit-order-status/:id").patch(adminAuth, csrfProtect, editOrderStatus);
 router.route("/edit-shipping-tracking-number/:id").patch(adminAuth, csrfProtect, editShippingTrackingNumber);
-router.route("/get-order/:id").get(adminAuth, getOrder);
-router.route("/get-all-orders").get(adminAuth, getAllOrders);
+router.route("/get-order/:id").get(adminAuth, csrfProtect, getOrder);
+router.route("/get-all-orders").get(adminAuth, csrfProtect, getAllOrders);
 router.route("/delete-order/:id").delete(adminAuth, csrfProtect, deleteOrder);
 
 export default router;

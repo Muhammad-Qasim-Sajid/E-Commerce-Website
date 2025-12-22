@@ -1,5 +1,4 @@
 import OrderTable from '../../../components/admin/OrderTable';
-import { orders } from '../../../data/orders';
 
 export default function AdminOrders() {
   return (
@@ -11,7 +10,7 @@ export default function AdminOrders() {
           </p>
         </div>
         <div className="bg-white">
-          <OrderTable orders={orders}/>
+          <OrderTable />
         </div>
       </div>
     </div>

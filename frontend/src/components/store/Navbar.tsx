@@ -16,7 +16,7 @@ const Navbar = () => {
   ];
 
   const rightLinks = [
-    { href: "/faq", label: "FAQs" },
+    { href: "/faqs", label: "FAQs" },
     { href: "/contact", label: "Contact" },
   ];
 
