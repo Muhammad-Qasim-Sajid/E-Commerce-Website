@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useInView } from "framer-motion";
 import { Trash2, Minus, Plus, ArrowRight, ShoppingCart } from "lucide-react";
-import Link from "next/link";
+import { getCart, removeFromCart, clearCart } from '../../../lib/utils';
+import { productsApi } from '../../../lib/api/productsAPIs';
+import Spinner from '../../../components/Spinner';
 
 const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef(null);
@@ -41,67 +44,202 @@ const AnimatedText = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const cartItems = [
-  {
-    id: 1,
-    collectionId: 1,
-    collectionName: "Legacy Series 1895",
-    variantName: "Rose Gold & Black Dial",
-    image: "/1.png",
-    price: 12999,
-    quantity: 1,
-    stock: 15,
-  },
-  {
-    id: 2,
-    collectionId: 2,
-    collectionName: "Horizon Collection",
-    variantName: "Silver Dial Steel",
-    image: "/3.png",
-    price: 8999,
-    quantity: 1,
-    stock: 22,
-  },
-  {
-    id: 3,
-    collectionId: 4,
-    collectionName: "Aether Series",
-    variantName: "Titanium Skeleton",
-    image: "/2.png",
-    price: 18999,
-    quantity: 1,
-    stock: 7,
-  },
-];
+interface CartProduct {
+  _id: string;
+  name: string;
+  variants: Array<{
+    _id: string;
+    variantName: string;
+    variantImage: string;
+    variantPrice: number;
+    variantPreviousPrice?: number;
+    variantOrder: number;
+    variantStock: number;
+  }>;
+}
+
+interface CartItemDisplay {
+  id: string;
+  productId: string;
+  variantId: string;
+  collectionName: string;
+  variantName: string;
+  image: string;
+  price: number;
+  quantity: number;
+  stock: number;
+}
 
 export default function Cart() {
-  const [items, setItems] = useState(cartItems);
+  const [cartItems, setCartItems] = useState<CartItemDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [updatingQuantities, setUpdatingQuantities] = useState<Set<string>>(new Set());
+  const [shippingPrice, setShippingPrice] = useState(0);
 
-  const updateQuantity = (id: number, newQuantity: number) => {
+  useEffect(() => {
+    fetchCartData();
+
+    const handleCartUpdate = () => {
+      fetchCartData();
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadShippingPrice = async () => {
+      try {  
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/shipping-price/get`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load shipping price');
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          setShippingPrice(data.data.shippingPrice);
+        }
+      } catch (error) {
+        console.error('Error loading shipping price:', error); // Debug log
+        setError("Something went wrong. Try Again");
+      }
+    };
+
+    loadShippingPrice();
+  }, []);
+
+  const fetchCartData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const cart = getCart();
+      
+      if (cart.length === 0) {
+        setCartItems([]);
+        setLoading(false);
+        return;
+      }
+
+      const productIds = [...new Set(cart.map(item => item.productId))];
+
+      const productsResponse = await productsApi.getProductsByIds(productIds);
+
+      if (!productsResponse.success) {
+        throw new Error(productsResponse.message || 'Failed to fetch products');
+      }
+
+      const products: CartProduct[] = productsResponse.data;
+
+      const cartItemsData: CartItemDisplay[] = cart.map(cartItem => {
+        const product = products.find(p => p._id === cartItem.productId);
+
+        if (!product) {
+          throw new Error(`Product ${cartItem.productId} not found`);
+        }
+
+        const variant = product.variants.find(v => v._id === cartItem.variantId);
+
+        if (!variant) {
+          throw new Error(`Variant ${cartItem.variantId} not found in product ${product._id}`);
+        }
+
+        return {
+          id: `${cartItem.productId}-${cartItem.variantId}`,
+          productId: cartItem.productId,
+          variantId: cartItem.variantId,
+          collectionName: product.name,
+          variantName: variant.variantName,
+          image: variant.variantImage,
+          price: variant.variantPrice,
+          quantity: cartItem.quantity,
+          stock: variant.variantStock
+        };
+      });
+
+      setCartItems(cartItemsData);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to load cart items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateQuantity = async (productId: string, variantId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
 
-    const item = items.find((item) => item.id === id);
+    const item = cartItems.find(item => item.productId === productId && item.variantId === variantId);
     if (item && newQuantity > item.stock) return;
 
-    setItems(
-      items.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
+    const itemId = `${productId}-${variantId}`;
+    setUpdatingQuantities(prev => new Set(prev).add(itemId));
+
+    try {
+      removeFromCart(productId, variantId);
+
+      const cart = getCart();
+      const existingItemIndex = cart.findIndex(item => 
+        item.productId === productId && item.variantId === variantId
+      );
+
+      if (existingItemIndex > -1) {
+        cart[existingItemIndex].quantity = newQuantity;
+      } else {
+        cart.push({
+          productId,
+          variantId,
+          quantity: newQuantity
+        });
+      }
+
+      localStorage.setItem('greatness-cart', JSON.stringify(cart));
+      window.dispatchEvent(new Event('cartUpdated'));
+
+      setCartItems(prev => 
+        prev.map(item => 
+          item.productId === productId && item.variantId === variantId
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error('Error updating quantity:', error); // Debug log
+    } finally {
+      setUpdatingQuantities(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
+    }
+  };
+
+  const removeItem = (productId: string, variantId: string) => {
+    removeFromCart(productId, variantId);
+    setCartItems(prev => 
+      prev.filter(item => !(item.productId === productId && item.variantId === variantId))
     );
   };
 
-  const removeItem = (id: number) => {
-    setItems(items.filter((item) => item.id !== id));
+  const handleClearCart = () => {
+    clearCart();
+    setCartItems([]);
   };
 
-  const subtotal = items.reduce(
+  const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = subtotal > 50000 ? 0 : 1500;
-  const tax = subtotal * 0.18;
-  const total = subtotal + shipping + tax;
+  const total = subtotal + shippingPrice;
 
   const handleCheckout = () => {
     setIsProcessing(true);
@@ -111,7 +249,29 @@ export default function Cart() {
     }, 1000);
   };
 
-  if (items.length === 0) {
+  if (loading) {
+    return (
+      <Spinner />
+    );
+  }
+
+  if (error ) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Failed to load data'}</p>
+          <button
+            onClick={fetchCartData}
+            className="px-4 py-2 border border-[#1a1a1a] text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] pt-20 lg:pt-22">
         <section className="pb-26 pt-14">
@@ -162,80 +322,86 @@ export default function Cart() {
             <div className="lg:col-span-2">
               <AnimatedSection>
                 <div className="space-y-8">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="border border-[#1a1a1a]/20 sm:p-6 p-4"
-                    >
-                      <div className="flex flex-col md:flex-row gap-6">
-                        {/* Item Image */}
-                        <div className="md:w-32 md:h-32 w-full aspect-square">
-                          <div className="relative w-full h-full overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={item.image}
-                              alt={item.variantName}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Item Details */}
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <div>
-                              <p className="font-light mb-1 sm:text-base text-sm">
-                                {item.collectionName}
-                              </p>
-                              <p className="text-gray-500 sm:text-sm text-[11px] mb-1">
-                                {item.variantName}
-                              </p>
-                              <p className="text-lg font-light">
-                                PKR {item.price.toLocaleString()}
-                              </p>
+                  {cartItems.map((item) => {
+                    const itemId = `${item.productId}-${item.variantId}`;
+                    const isUpdating = updatingQuantities.has(itemId);
+                    
+                    return (
+                      <div
+                        key={itemId}
+                        className="border border-[#1a1a1a]/20 sm:p-6 p-4"
+                      >
+                        <div className="flex flex-col md:flex-row gap-6">
+                          {/* Item Image */}
+                          <div className="md:w-32 md:h-32 w-full aspect-square">
+                            <div className="relative w-full h-full overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.image}
+                                alt={item.variantName}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <button
-                              onClick={() => removeItem(item.id)}
-                              className="text-gray-400 hover:text-red-600 transition-colors duration-300 h-fit cursor-pointer"
-                            >
-                              <Trash2 className="sm:w-5 sm:h-5 w-4 h-4" />
-                            </button>
                           </div>
 
-                          {/* Quantity Controls */}
-                          <div className="flex items-center justify-between mt-6">
-                            <div className="flex items-center border border-[#1a1a1a]/20">
+                          {/* Item Details */}
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <div>
+                                <p className="font-light mb-1 sm:text-base text-sm">
+                                  {item.collectionName}
+                                </p>
+                                <p className="text-gray-500 sm:text-sm text-[11px] mb-1">
+                                  {item.variantName}
+                                </p>
+                                <p className="text-lg font-light">
+                                  PKR {item.price.toLocaleString()}
+                                </p>
+                              </div>
                               <button
-                                onClick={() =>
-                                  updateQuantity(item.id, item.quantity - 1)
-                                }
-                                className="sm:p-3 p-2 hover:bg-[#1a1a1a]/5 transition-colors duration-300 disabled:opacity-30 cursor-pointer"
-                                disabled={item.quantity <= 1}
+                                onClick={() => removeItem(item.productId, item.variantId)}
+                                className="text-gray-400 hover:text-red-600 transition-colors duration-300 h-fit cursor-pointer"
+                                disabled={isUpdating}
                               >
-                                <Minus className="sm:w-4 sm:h-4 w-3 h-3" />
-                              </button>
-                              <span className="sm:px-4 sm:py-3 px-3 py-2 min-w-[60px] text-center">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  updateQuantity(item.id, item.quantity + 1)
-                                }
-                                className="sm:p-3 p-2 hover:bg-[#1a1a1a]/5 transition-colors duration-300 disabled:opacity-30 cursor-pointer"
-                                disabled={item.quantity >= item.stock}
-                              >
-                                <Plus className="sm:w-4 sm:h-4 w-3 h-3" />
+                                <Trash2 className="sm:w-5 sm:h-5 w-4 h-4" />
                               </button>
                             </div>
-                            <p className="text-gray-500 sm:text-sm text-xs">
-                              PKR{" "}
-                              {(item.price * item.quantity).toLocaleString()}
-                            </p>
+
+                            {/* Quantity Controls */}
+                            <div className="flex items-center justify-between mt-6">
+                              <div className="flex items-center border border-[#1a1a1a]/20">
+                                <button
+                                  onClick={() =>
+                                    updateQuantity(item.productId, item.variantId, item.quantity - 1)
+                                  }
+                                  className="sm:p-3 p-2 hover:bg-[#1a1a1a]/5 transition-colors duration-300 disabled:opacity-30 cursor-pointer"
+                                  disabled={item.quantity <= 1 || isUpdating}
+                                >
+                                  <Minus className="sm:w-4 sm:h-4 w-3 h-3" />
+                                </button>
+                                <span className="sm:px-4 sm:py-3 px-3 py-2 min-w-[60px] text-center">
+                                  {isUpdating ? '...' : item.quantity}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    updateQuantity(item.productId, item.variantId, item.quantity + 1)
+                                  }
+                                  className="sm:p-3 p-2 hover:bg-[#1a1a1a]/5 transition-colors duration-300 disabled:opacity-30 cursor-pointer"
+                                  disabled={item.quantity >= item.stock || isUpdating}
+                                >
+                                  <Plus className="sm:w-4 sm:h-4 w-3 h-3" />
+                                </button>
+                              </div>
+                              <p className="text-gray-500 sm:text-sm text-xs">
+                                PKR{" "}
+                                {(item.price * item.quantity).toLocaleString()}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </AnimatedSection>
 
@@ -250,7 +416,7 @@ export default function Cart() {
                     <span className="sm:text-base text-sm">Continue Exploring</span>
                   </Link>
                   <button
-                    onClick={() => setItems([])}
+                    onClick={handleClearCart}
                     className="flex-1 group inline-flex items-center justify-center gap-1.5 border border-[#1a1a1a] text-[#1a1a1a] px-8 py-4 hover:border-red-600 hover:text-red-600 transition-all duration-300 cursor-pointer"
                   >
                     <Trash2 className="sm:w-5 sm:h-5 w-4 h-4" />
@@ -275,11 +441,7 @@ export default function Cart() {
                     </div>
                     <div className="flex justify-between sm:text-sm text-[12px]">
                       <span className="text-gray-500">Shipping</span>
-                      <span>
-                        {shipping === 0
-                          ? "Free"
-                          : `PKR ${shipping.toLocaleString()}`}
-                      </span>
+                      <span>`PKR {shippingPrice.toLocaleString()}</span>
                     </div>
                     <div className="border-t border-[#1a1a1a]/20 pt-4">
                       <div className="flex justify-between">
