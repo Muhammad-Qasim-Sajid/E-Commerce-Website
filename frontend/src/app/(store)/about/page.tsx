@@ -112,12 +112,12 @@ export default function About() {
 
   if (error || !ourStoryData) {
     return (
-      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center pt-20">
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error || 'Failed to load data'}</p>
           <button
             onClick={fetchOurStoryData}
-            className="px-4 py-2 border border-[#1a1a1a] text-[#1a1a1a] cursor-pointer"
+            className="px-4 py-2 border border-[#1a1a1a] text-[#1a1a1a] hover:bg-[#1a1a1a] hover:text-white transition-colors cursor-pointer"
           >
             Retry
           </button>

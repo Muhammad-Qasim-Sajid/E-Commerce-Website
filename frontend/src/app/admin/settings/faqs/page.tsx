@@ -249,7 +249,7 @@ export default function EditFAQsPage() {
                       <textarea
                         value={faq.answer}
                         onChange={(e) => updateFaq(index, 'answer', e.target.value)}
-                        rows={4}
+                        rows={3}
                         className={`w-full border ${validationErrors[`faqs.${index}.answer`] ? 'border-red-500' : 'border-[#eae2d6]'} bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none focus:ring-0.5 focus:ring-[#1a1a1a] focus:border-[#1a1a1a] transition-colors resize-none text-sm`}
                         placeholder="Enter answer"
                       />
