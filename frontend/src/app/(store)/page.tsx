@@ -22,20 +22,22 @@ const homeApi = {
   }
 };
 
-interface Variant {
+export interface Variant {
   variantName: string;
   variantImage: string;
   variantPrice: number;
   variantPreviousPrice?: number;
   variantOrder: number;
   variantStock: number;
+  _id: string;
 }
 
-interface Product {
+export interface Product {
   _id: string;
   name: string;
-  smallDescription: string;
   variants: Variant[];
+  smallDescription: string;
+  longDescription: string;
   featuredProduct: boolean;
 }
 

@@ -39,36 +39,36 @@ app.use(
 //       objectSrc: ["'none'"],
 //     },
 // },
-app.use("/api/v1/admin/login", rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5,
-    standardHeaders: true,
-    legacyHeaders: false,
-}));
-app.use("/api/v1/order/add-order", rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-}));
-app.use("/api/v1/order/track-order", rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 30,
-    standardHeaders: true,
-    legacyHeaders: false,
-}));
-app.use("/api/v1/admin", rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 300,
-    standardHeaders: true,
-    legacyHeaders: false,
-}));
-app.use("/api", rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-}));
+// app.use("/api/v1/admin/login", rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 5,
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// }));
+// app.use("/api/v1/order/add-order", rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 10,
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// }));
+// app.use("/api/v1/order/track-order", rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 30,
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// }));
+// app.use("/api/v1/admin", rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 300,
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// }));
+// app.use("/api", rateLimit({
+//     windowMs: 15 * 60 * 1000,
+//     max: 100,
+//     standardHeaders: true,
+//     legacyHeaders: false,
+// }));
 
 // Router imports
 import homeRouter from "./routes/home.routes.js";

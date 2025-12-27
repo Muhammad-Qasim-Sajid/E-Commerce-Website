@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ShoppingCart, Menu, X } from "lucide-react";
+import { getCart } from '../../lib/utils';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [cartItemsCount, setCartItemsCount] = useState(0);
   const pathname = usePathname();
 
   const leftLinks = [
@@ -19,6 +21,38 @@ const Navbar = () => {
     { href: "/faqs", label: "FAQs" },
     { href: "/contact", label: "Contact" },
   ];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const cart = getCart();
+      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+      setCartItemsCount(totalItems);
+    }, 0);
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'greatness-cart') {
+        const cart = getCart();
+        const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+        setCartItemsCount(totalItems);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    const handleCartUpdate = () => {
+      const cart = getCart();
+      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+      setCartItemsCount(totalItems);
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, []);
 
   const toggleBodyScroll = (open: boolean) => {
     if (open) {
@@ -108,9 +142,11 @@ const Navbar = () => {
                 }`}
               >
                 <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-2 -right-2 w-4 h-4 bg-[#d4af37] text-black text-[10px] flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110">
-                  0
-                </span>
+                {cartItemsCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-[#d4af37] text-black text-[10px] flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110">
+                    {cartItemsCount > 99 ? '99+' : cartItemsCount}
+                  </span>
+                )}
               </Link>
             </div>
           </div>
@@ -189,9 +225,11 @@ const Navbar = () => {
                   <ShoppingCart className="w-5 h-5" />
                   <span>Cart</span>
                 </div>
-                <span className="w-6 h-6 bg-[#d4af37] text-black text-xs flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110">
-                  0
-                </span>
+                {cartItemsCount > 0 && (
+                  <span className="w-6 h-6 bg-[#d4af37] text-black text-xs flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110">
+                    {cartItemsCount > 99 ? '99+' : cartItemsCount}
+                  </span>
+                )}
               </Link>
             </div>
           </div>

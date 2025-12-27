@@ -1,9 +1,31 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useInView } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
+import { productsApi } from '../../../../../lib/api/productsAPIs';
+import { addToCart } from '../../../../../lib/utils';
+import Spinner from '../../../../../components/Spinner';
+
+export interface Variant {
+  variantName: string;
+  variantImage: string;
+  variantPrice: number;
+  variantPreviousPrice?: number;
+  variantOrder: number;
+  variantStock: number;
+  _id: string;
+}
+
+export interface Product {
+  _id: string;
+  name: string;
+  variants: Variant[];
+  smallDescription: string;
+  longDescription: string;
+  featuredProduct: boolean;
+}
 
 const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef(null);
@@ -23,55 +45,83 @@ const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const collections = [
-  {
-    id: 1,
-    name: "Legacy Series 1895",
-    smallDescription:
-      "Inspired by 19th-century pocket watches, reimagined for the modern wrist",
-    longDescription:
-      "The Legacy Series 1895 pays homage to the golden age of horology while embracing contemporary aesthetics. Each piece undergoes 300 hours of meticulous hand-finishing by our master craftsmen in Switzerland. The movement features a proprietary 72-hour power reserve with a silicon escapement for enhanced accuracy and durability. The case is carved from a single block of 904L stainless steel, polished to mirror perfection.",
-    featuredProduct: true,
-    variants: [
-      {
-        variantName: "Rose Gold & Black Dial",
-        variantImage: "/1.png",
-        variantPrice: 12999,
-        variantPreviousPrice: 14999,
-        variantOrder: 1,
-        variantStock: 15,
-      },
-      {
-        variantName: "White Gold & Silver Dial",
-        variantImage: "/2.png",
-        variantPrice: 13999,
-        variantPreviousPrice: 15999,
-        variantOrder: 2,
-        variantStock: 8,
-      },
-      {
-        variantName: "Platinum & Blue Dial",
-        variantImage: "/3.png",
-        variantPrice: 18999,
-        variantPreviousPrice: null,
-        variantOrder: 3,
-        variantStock: 5,
-      },
-    ],
-  },
-];
-
 export default function CollectionDetail() {
   const params = useParams();
+  const [collection, setCollection] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedVariant, setSelectedVariant] = useState(0);
-  const collection = collections.find((c) => c.id.toString() === params.id);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
 
-  if (!collection) {
+  const fetchCollection = useCallback(async () => {
+    if (!params.id) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await productsApi.getProduct(params.id as string);
+
+      if (data.success) {
+        setCollection(data.data);
+      } else {
+        setError(data.message || 'Failed to load collection');
+      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to load collection');
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id]);
+
+  useEffect(() => {
+    fetchCollection();
+  }, [fetchCollection]);
+
+  const handleAddToCart = () => {
+    if (!collection) return;
+    
+    const variant = collection.variants[selectedVariant];
+    if (variant.variantStock <= 0) return;
+    
+    setAddingToCart(true);
+    setCartMessage(null);
+
+    try {
+      const variantId = variant._id;
+      addToCart(collection._id, variantId);
+      
+      setCartMessage("Added to cart successfully!");
+
+      setTimeout(() => {
+        setCartMessage(null);
+      }, 3000);
+    } catch {
+      setCartMessage("Failed to add to cart. Please try again.");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] flex items-center justify-center">
-        <p className="text-center text-3xl font-['Playfair_Display'] tracking-tight italic mb-4">
-          Collection not found
-        </p>
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center pt-20">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (error || !collection) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] flex items-center justify-center pt-20">
+        <div className="text-center">
+          <p className="text-3xl font-['Playfair_Display'] tracking-tight italic mb-4">
+            Collection not found
+          </p>
+          <p className="text-red-600 mb-4">{error}</p>
+        </div>
       </div>
     );
   }
@@ -99,7 +149,7 @@ export default function CollectionDetail() {
                 {/* Variant Thumbnails */}
                 {collection.variants.length > 1 && (
                   <div className="flex gap-3">
-                    {collection.variants.map((v, index) => (
+                    {collection.variants.map((v: Variant, index: number) => (
                       <button
                         key={index}
                         onClick={() => setSelectedVariant(index)}
@@ -134,7 +184,7 @@ export default function CollectionDetail() {
                 <div className="mb-8">
                   <p className="text-sm text-gray-500 mb-1">Select Variant</p>
                   <div className="space-y-2">
-                    {collection.variants.map((v, index) => (
+                    {collection.variants.map((v: Variant, index: number) => (
                       <button
                         key={index}
                         onClick={() => setSelectedVariant(index)}
@@ -144,28 +194,28 @@ export default function CollectionDetail() {
                       >
                         <div className="flex justify-between items-center">
                           <div>
-                            <p className="sm:text-base text-sm">{variant.variantName}</p>
+                            <p className="sm:text-base text-sm">{v.variantName}</p>
                             <div className="flex items-center gap-3 mt-1">
                               <span className="sm:text-sm text-xs font-light">
-                                PKR {variant.variantPrice.toLocaleString()}
+                                PKR {v.variantPrice.toLocaleString()}
                               </span>
-                              {variant.variantPreviousPrice && (
+                              {v.variantPreviousPrice && (
                                 <span className="text-gray-500 line-through sm:text-xs text-[11px] mt-0.5">
                                   PKR{" "}
-                                  {variant.variantPreviousPrice.toLocaleString()}
+                                  {v.variantPreviousPrice.toLocaleString()}
                                 </span>
                               )}
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="sm:text-xs text-[11px] text-gray-500">
-                              {variant.variantStock > 10 ? (
+                              {v.variantStock > 10 ? (
                                 <span className="text-gray-500">
-                                  In Stock ({variant.variantStock})
+                                  In Stock ({v.variantStock})
                                 </span>
-                              ) : variant.variantStock > 0 ? (
+                              ) : v.variantStock > 0 ? (
                                 <span className="text-gray-500">
-                                  Limited Stock ({variant.variantStock})
+                                  Limited Stock ({v.variantStock})
                                 </span>
                               ) : (
                                 <span className="text-red-600">
@@ -185,11 +235,11 @@ export default function CollectionDetail() {
                   <div className="flex justify-between items-center mb-6">
                     <div>
                       <p className="text-xl font-light">
-                        ${variant.variantPrice.toLocaleString()}
+                        PKR {variant.variantPrice.toLocaleString()}
                       </p>
                       {variant.variantPreviousPrice && (
                         <p className="text-gray-500 line-through">
-                          ${variant.variantPreviousPrice.toLocaleString()}
+                          PKR {variant.variantPreviousPrice.toLocaleString()}
                         </p>
                       )}
                     </div>
@@ -209,15 +259,22 @@ export default function CollectionDetail() {
                     </div>
                   </div>
 
+                  {/* Cart Message */}
+                  {cartMessage && (
+                    <div className={`mb-4 p-3 text-sm ${cartMessage.includes("successfully") ? "text-green-600 border border-green-600" : "text-red-600 border border-red-600"}`}>
+                      {cartMessage}
+                    </div>
+                  )}
+
                   <button
+                    onClick={handleAddToCart}
+                    disabled={variant.variantStock === 0 || addingToCart}
                     className="w-full group inline-flex items-center justify-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] px-8 py-4 hover:opacity-50 transition-all duration-300 disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
-                    disabled={variant.variantStock === 0}
                   >
                     <ShoppingCart className="w-5 h-5" />
                     <span>
-                      {variant.variantStock === 0
-                        ? "Out of Stock"
-                        : "Add to Cart"}
+                      {addingToCart ? "Adding..." : 
+                       variant.variantStock === 0 ? "Out of Stock" : "Add to Cart"}
                     </span>
                   </button>
                 </div>
