@@ -4,6 +4,46 @@ import { useState, useRef } from "react";
 import { useInView } from "framer-motion";
 import { Send, MapPin, Phone, Mail, Clock } from "lucide-react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const submitContact = async (formData: ContactFormData): Promise<ContactResponse> => {
+  const response = await fetch(`${API_URL}/contacts/add-contact`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to send message");
+  }
+
+  return response.json();
+};
+
+interface ContactFormData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+interface ContactResponse {
+  success: boolean;
+  message: string;
+  data: {
+    _id: string;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    read: boolean;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
 const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
@@ -49,10 +89,9 @@ export default function Contact() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -62,11 +101,25 @@ export default function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert("Message sent successfully!");
-    setFormData({ name: "", email: "", subject: "", message: "" });
-    setIsSubmitting(false);
+    
+    try {
+      setIsSubmitting(true);
+      setSubmitMessage(null);
+
+      const data = await submitContact(formData);
+      
+      if (data.success) {
+        setSubmitMessage({ type: 'success', text: "Message sent successfully!" });
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        setSubmitMessage({ type: 'error', text: data.message || "Failed to send message" });
+      }
+    } catch (error) {
+      const err = error as Error;
+      setSubmitMessage({ type: 'error', text: err.message || "Failed to send message. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -128,7 +181,8 @@ export default function Contact() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm"
+                      disabled={isSubmitting}
+                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="Your full name"
                     />
                   </div>
@@ -145,7 +199,8 @@ export default function Contact() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm"
+                      disabled={isSubmitting}
+                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -162,7 +217,8 @@ export default function Contact() {
                       value={formData.subject}
                       onChange={handleChange}
                       required
-                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm"
+                      disabled={isSubmitting}
+                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="Inquiry subject"
                     />
                   </div>
@@ -178,12 +234,20 @@ export default function Contact() {
                       value={formData.message}
                       onChange={handleChange}
                       required
+                      disabled={isSubmitting}
                       rows={6}
-                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 resize-none text-sm"
+                      className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 resize-none text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="Your message here..."
                     />
                   </div>
                 </AnimatedText>
+
+                {/* Success/Error Message */}
+                {submitMessage && (
+                  <div className={`mb-6 p-4 text-sm ${submitMessage.type === 'success' ? 'text-green-600 border border-green-600' : 'text-red-600 border border-red-600'}`}>
+                    {submitMessage.text}
+                  </div>
+                )}
 
                 <AnimatedText>
                   <button
