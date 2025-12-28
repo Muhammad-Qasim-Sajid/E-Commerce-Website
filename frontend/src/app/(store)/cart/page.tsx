@@ -74,7 +74,6 @@ export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItemDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [updatingQuantities, setUpdatingQuantities] = useState<Set<string>>(new Set());
   const [shippingPrice, setShippingPrice] = useState(0);
 
@@ -241,21 +240,13 @@ export default function Cart() {
   );
   const total = subtotal + shippingPrice;
 
-  const handleCheckout = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      alert("Proceeding to checkout...");
-      setIsProcessing(false);
-    }, 1000);
-  };
-
   if (loading) {
     return (
       <Spinner />
     );
   }
 
-  if (error ) {
+  if (error) {
     return (
       <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
         <div className="text-center">
@@ -453,15 +444,12 @@ export default function Cart() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleCheckout}
-                    disabled={isProcessing}
-                    className="w-full group inline-flex items-center justify-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] sm:py-4 px-4 py-3 hover:border-[#d4af37] hover:text-[#d4af37] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
+                  <Link
+                    href="/checkout"
+                    className="w-full group inline-flex items-center justify-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] sm:py-3 px-4 py-2 hover:border-[#d4af37] hover:text-[#d4af37] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
                   >
-                    <span className="sm:text-base text-sm">
-                      {isProcessing ? "Processing" : "Proceed to Checkout"}
-                    </span>
-                  </button>
+                    Proceed to Checkout
+                  </Link>
                 </div>
               </AnimatedSection>
             </div>

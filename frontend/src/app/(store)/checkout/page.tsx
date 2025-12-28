@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useInView } from "framer-motion";
 import { ArrowRight, Smartphone } from "lucide-react";
+import { getCart, clearCart } from '../../../lib/utils';
+import { orderApi } from '../../../lib/api/orderAPIs';
+import { productsApi } from '../../../lib/api/productsAPIs';
+import Spinner from '../../../components/Spinner';
 
 const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef(null);
@@ -40,36 +45,119 @@ const AnimatedText = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const cartItems = [
-  {
-    id: 1,
-    collectionName: "Legacy Series 1895",
-    variantName: "Rose Gold & Black Dial",
-    price: 12999,
-    quantity: 1,
-  },
-  {
-    id: 2,
-    collectionName: "Horizon Collection",
-    variantName: "Silver Dial Steel",
-    price: 8999,
-    quantity: 1,
-  },
-];
+interface Variant {
+  variantName: string;
+  variantImage: string;
+  variantPrice: number;
+  variantPreviousPrice?: number;
+  variantOrder: number;
+  variantStock: number;
+  _id: string;
+}
+interface Product {
+  _id: string;
+  name: string;
+  variants: Variant[];
+  smallDescription: string;
+  longDescription: string;
+  featuredProduct: boolean;
+}
+interface CartItem {
+  productId: string;
+  variantId: string;
+  quantity: number;
+}
 
 export default function Checkout() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     address: "",
-    city: "",
-    state: "",
-    country: "Pakistan",
-    postalCode: "",
   });
 
+  const [total, setTotal] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        const cart = getCart();
+        if (cart.length === 0) {
+          setError("Your cart is empty. Please add items to proceed.");
+          setLoading(false);
+          return;
+        }
+        
+        setCartItems(cart);
+
+        try {
+          const shippingResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/shipping-price/get`, {
+            credentials: 'include',
+          });
+
+          if (shippingResponse.ok) {
+            const shippingData = await shippingResponse.json();
+            if (shippingData.success && shippingData.data) {
+              const shippingPrice = shippingData.data.shippingPrice;
+              await calculateTotal(cart, shippingPrice);
+            }
+          }
+        } catch (shippingError) {
+          console.error('Error loading shipping price:', shippingError); // Debug log
+          setError("Something went wrong");
+        }
+      } catch (err) {
+        const error = err as Error;
+        setError(error.message || 'Failed to load checkout data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const calculateTotal = async (cart: CartItem[], shipping: number) => {
+    try {
+      if (cart.length === 0) {
+        setTotal(0);
+        return;
+      }
+
+      const productIds = [...new Set(cart.map(item => item.productId))];
+      const productsResponse = await productsApi.getProductsByIds(productIds);
+
+      if (!productsResponse.success) {
+        throw new Error(productsResponse.message || 'Failed to fetch products');
+      }
+
+      const products = productsResponse.data;
+
+      let subtotal = 0;
+      cart.forEach(cartItem => {
+        const product = products.find((p: Product) => p._id === cartItem.productId);
+        if (product) {
+          const variant = product.variants.find((v: Variant) => v._id === cartItem.variantId);
+          if (variant) {
+            subtotal += variant.variantPrice * cartItem.quantity;
+          }
+        }
+      });
+
+      const calculatedTotal = subtotal + shipping;
+      setTotal(calculatedTotal);
+    } catch (error) {
+      console.error('Error calculating total:', error); // Debug log
+      setTotal(0);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -83,21 +171,83 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsProcessing(true);
     
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (cartItems.length === 0) {
+      setError("Your cart is empty. Please add items to proceed.");
+      return;
+    }
 
-    alert("Redirecting to JazzCash payment gateway...");
-    setIsProcessing(false);
+    if (!formData.name || !formData.email || !formData.phone || !formData.address) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const orderData = {
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        customerAddress: formData.address,
+        items: cartItems.map(item => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity
+        }))
+      };
+
+      const response = await orderApi.placeOrder(orderData);
+      
+      if (response.success) {
+        clearCart();
+        
+        alert("Order placed successfully! You will receive a confirmation email.");
+
+        router.push("/");
+      } else {
+        throw new Error(response.message || 'Failed to place order');
+      }
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Failed to place order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const shipping = subtotal > 50000 ? 0 : 1500;
-  const tax = subtotal * 0.18;
-  const total = subtotal + shipping + tax;
+  if (loading) {
+    return (
+      <Spinner />
+    );
+  }
+
+  if (error && cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] pt-20 lg:pt-22">
+        <section className="pb-26 pt-14">
+          <div className="container mx-auto lg:px-40 sm:px-20 px-10">
+            <div className="text-center py-24">
+              <div className="w-20 h-20 border border-[#1a1a1a]/20 flex items-center justify-center mx-auto mb-6">
+                <Smartphone className="w-8 h-8 text-[#1a1a1a]/40" />
+              </div>
+              <p className="font-['Playfair_Display'] italic text-2xl mb-8">
+                {error}
+              </p>
+              <button
+                onClick={() => router.push("/collections")}
+                className="group inline-flex items-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] sm:px-8 px-6 sm:py-4 py-3 hover:border-[#d4af37] hover:text-[#d4af37] transition-all duration-300 cursor-pointer"
+              >
+                <span className="sm:text-base text-sm">Explore Collections</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] pt-20 lg:pt-22">
@@ -113,6 +263,15 @@ export default function Checkout() {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* Error Message */}
+      {error && (
+        <div className="container mx-auto lg:px-40 sm:px-20 px-10 mt-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 text-sm">
+            {error}
+          </div>
+        </div>
+      )}
 
       {/* Checkout Form & Summary */}
       <section className="pb-26 pt-14">
@@ -143,7 +302,8 @@ export default function Checkout() {
                             value={formData.name}
                             onChange={handleChange}
                             required
-                            className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm"
+                            disabled={isProcessing}
+                            className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             placeholder="Your full name"
                           />
                         </div>
@@ -161,7 +321,8 @@ export default function Checkout() {
                               value={formData.email}
                               onChange={handleChange}
                               required
-                              className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm"
+                              disabled={isProcessing}
+                              className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                               placeholder="your@email.com"
                             />
                           </div>
@@ -178,7 +339,8 @@ export default function Checkout() {
                               value={formData.phone}
                               onChange={handleChange}
                               required
-                              className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm"
+                              disabled={isProcessing}
+                              className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                               placeholder="+92 300 1234567"
                             />
                           </div>
@@ -210,7 +372,8 @@ export default function Checkout() {
                             onChange={handleChange}
                             required
                             rows={3}
-                            className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 resize-none text-sm"
+                            disabled={isProcessing}
+                            className="w-full p-4 py-3 border border-[#1a1a1a]/20 bg-transparent focus:border-[#d4af37] focus:outline-none transition-colors duration-300 resize-none text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             placeholder="House no 11, Phase 1 Shadman town Sahiwal, Tehsil & DIstrict Sahiwal, Punjab - Pakistan"
                           />
                         </div>
@@ -262,68 +425,34 @@ export default function Checkout() {
                 </AnimatedSection>
               </div>
 
-              {/* Right Column - Order Summary */}
-              <div>
+              {/* Right Column - Order Total */}
+              <div className="w-full max-w-md mx-auto">
                 <AnimatedSection>
-                  <div className="border border-[#1a1a1a]/20 p-6 pb-8 sticky top-24">
-                    <p className="font-['Playfair_Display'] italic text-xl mb-6">
-                      Order Summary
+                  <div className="border border-[#1a1a1a]/20 p-6 sticky top-24">
+                    <p className="font-['Playfair_Display'] italic text-2xl text-center mb-4">
+                      Order Total
                     </p>
-
-                    {/* Order Items */}
-                    <div className="space-y-4 mb-8">
-                      {cartItems.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
-                          <div>
-                            <p className="font-light text-xs">{item.collectionName}</p>
-                            <p className="text-gray-500 text-[10px]">{item.variantName}</p>
-                            <p className="text-gray-500 text-[10px]">Qty: {item.quantity}</p>
-                          </div>
-                          <p className="text-[11px]">PKR {(item.price * item.quantity).toLocaleString()}</p>
-                        </div>
-                      ))}
-
-                      <div className="border-t border-[#1a1a1a]/20 pt-4 space-y-3">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-500">Subtotal</span>
-                          <span>PKR {subtotal.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-500">Shipping</span>
-                          <span>
-                            {shipping === 0
-                              ? "Free"
-                              : `PKR ${shipping.toLocaleString()}`}
-                          </span>
-                        </div>
-                        <div className="border-t border-[#1a1a1a]/20 pt-4">
-                          <div className="flex justify-between">
-                            <span className="text-sm">Total</span>
-                            <span className="">PKR {total.toLocaleString()}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <p className="text-center text-2xl font-semibold tracking-tight mb-6">
+                      PKR {total.toLocaleString()}
+                    </p>
 
                     {/* Submit */}
                     <AnimatedText>
-                      <div className="space-y-4">
+                      <div className="flex flex-col gap-4">
                         <button
                           type="submit"
-                          disabled={isProcessing}
-                          className="w-full group inline-flex items-center justify-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] sm:py-4 px-4 py-3 hover:border-[#d4af37] hover:text-[#d4af37] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
+                          disabled={isProcessing || cartItems.length === 0}
+                          className="w-full flex items-center justify-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] py-3 sm:py-4 px-4 hover:border-[#d4af37] hover:text-[#d4af37] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
                         >
                           <span className="sm:text-sm text-xs">
                             {isProcessing ? "Processing..." : "Complete Purchase"}
                           </span>
                           <ArrowRight className="sm:w-5 sm:h-5 w-4 h-4 group-hover:translate-x-2 transition-transform" />
                         </button>
-                        
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs mt-4">
-                            You will be redirected to JazzCash for secure payment
-                          </p>
-                        </div>
+
+                        <p className="text-center text-gray-500 text-xs mt-2">
+                          You will be redirected to JazzCash for secure payment
+                        </p>
                       </div>
                     </AnimatedText>
                   </div>

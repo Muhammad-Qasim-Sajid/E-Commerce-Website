@@ -122,5 +122,33 @@ export const orderApi = {
         }
 
         return response.json();
+    },
+
+    placeOrder: async (orderData: {
+        customerName: string;
+        customerEmail: string;
+        customerPhone: string;
+        customerAddress: string;
+        items: Array<{
+        productId: string;
+        variantId: string;
+        quantity: number;
+        }>;
+    }) => {
+        const response = await fetch(`${API_URL}/orders/add-order`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to place order');
+        }
+
+        return response.json();
     }
 };
