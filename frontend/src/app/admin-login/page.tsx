@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Watch } from 'lucide-react';
 import { adminLoginSchema, type AdminLoginData } from '../../lib/schemas';
 import { adminLogin, isAdmin } from '../../lib/api/adminAPIs';
-import Spinner from '../../components/Spinner';
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState<AdminLoginData>({
@@ -80,7 +79,9 @@ export default function AdminLoginPage() {
 
   if (isCheckingAuth) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

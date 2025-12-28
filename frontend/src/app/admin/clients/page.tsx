@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import ClientTable from '../../../components/admin/ClientTable';
-import Spinner from '../../../components/Spinner';
 import { getCsrfToken } from '@/lib/utils';
 
 type Client = {
@@ -60,7 +59,9 @@ export default function AdminClients() {
 
   if (loading) {
     return (
-        <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

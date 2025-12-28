@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Plus, Trash2 } from 'lucide-react';
 import { z } from 'zod';
-import Spinner from '../../../../components/Spinner';
 import { getCsrfToken } from '../../../../lib/utils';
 import { FAQsData, faqsSchema } from '../../../../lib/schemas';
 
@@ -170,7 +169,11 @@ export default function EditFAQsPage() {
   };
 
   if (isLoading) {
-    return <Spinner />;
+    return (
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
+    )
   }
 
   return (

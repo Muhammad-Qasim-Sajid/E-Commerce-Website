@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import { orderApi } from '../../lib/api/orderAPIs';
-import Spinner from '../Spinner';
 
 type OrderStatus = 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
 type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
@@ -131,7 +130,11 @@ const OrderTable = ({ initialOrders = [] }: OrderTableProps) => {
   };
 
   if (loading && !orders.length) {
-    return <Spinner />;
+    return (
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
+    )
   }
 
   if (error && !orders.length) {

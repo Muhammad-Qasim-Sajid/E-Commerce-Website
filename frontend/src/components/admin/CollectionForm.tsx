@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { Upload, X, Plus, Trash2 } from 'lucide-react';
 import { z } from 'zod';
 import { getCsrfToken } from '../../lib/utils';
-import Spinner from '../Spinner';
 import { productSchema } from '../../lib/schemas';
 
 interface VariantFormData {
@@ -470,7 +469,9 @@ const CollectionForm = ({ isEdit = false }: CollectionFormProps) => {
 
   if (loading) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

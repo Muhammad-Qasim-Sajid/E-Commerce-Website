@@ -4,7 +4,6 @@ import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { useInView } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import Spinner from "../../../components/Spinner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const ourStoryApi = {
@@ -106,7 +105,9 @@ export default function About() {
 
   if (loading) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

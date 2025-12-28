@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Truck, CreditCard, Package } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { orderApi } from '../../../../../lib/api/orderAPIs';
-import Spinner from '../../../../../components/Spinner';
 
 export interface OrderItem {
   productId: string;
@@ -150,7 +149,7 @@ export default function OrderEdit() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
-        <Spinner />
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
       </div>
     );
   }

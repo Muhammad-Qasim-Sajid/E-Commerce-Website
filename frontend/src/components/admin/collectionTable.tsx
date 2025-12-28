@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Edit, Trash2 } from 'lucide-react';
 import { getCsrfToken } from '../../lib/utils';
-import Spinner from '../Spinner';
 
 interface Variant {
   variantName: string;
@@ -108,7 +107,9 @@ const CollectionTable = () => {
 
   if (loading) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

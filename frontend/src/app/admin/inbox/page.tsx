@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import { getCsrfToken } from '../../../lib/utils';
-import Spinner from '../../../components/Spinner';
 
 interface Contact {
   _id: string;
@@ -108,7 +107,9 @@ export default function AllMessagesPage() {
 
   if (loading && messages.length === 0) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

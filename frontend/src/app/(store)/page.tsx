@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useInView } from 'framer-motion';
 import { ArrowRight, Watch } from "lucide-react";
 import CollectionCard from "../../components/store/CollectionCard";
-import Spinner from '../../components/Spinner';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const homeApi = {
@@ -142,7 +141,9 @@ export default function Home() {
 
   if (loading) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 

@@ -7,7 +7,6 @@ import { ArrowRight, Smartphone } from "lucide-react";
 import { getCart, clearCart } from '../../../lib/utils';
 import { orderApi } from '../../../lib/api/orderAPIs';
 import { productsApi } from '../../../lib/api/productsAPIs';
-import Spinner from '../../../components/Spinner';
 
 const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef(null);
@@ -219,7 +218,9 @@ export default function Checkout() {
 
   if (loading) {
     return (
-      <Spinner />
+      <div className="min-h-screen bg-[#eeeceb] flex items-center justify-center">
+        <div className="flex flex-col items-center animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a1a1a]"></div>
+      </div>
     );
   }
 
