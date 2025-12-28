@@ -20,46 +20,10 @@ export const addContact = asyncHandler(async (req: Request, res: Response): Prom
 
     console.log(parsed.data); // Debug log
 
-    const contact = await Contact.create({ ...parsed.data, read: false });
+    const contact = await Contact.create({ ...parsed.data });
 
     return ApiResponse(res, 201, "Message sent successfully", contact);
 
-});
-
-export const markReadContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
-    const { id } = req.params;
-    if (!id) {
-        throw new ApiError(400, "ID is required");
-    }
-
-    const contact = await Contact.findByIdAndUpdate(
-        id,
-        { read: true },
-        { new: true }
-    );
-    if (!contact) {
-        throw new ApiError(404, "Message not found");
-    }
-
-    return ApiResponse(res, 200, "Message marked as read", contact);
-});
-
-export const markUnreadContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
-    const { id } = req.params;
-    if (!id) {
-        throw new ApiError(400, "ID is required");
-    }
-
-    const contact = await Contact.findByIdAndUpdate(
-        id,
-        { read: false },
-        { new: true }
-    );
-    if (!contact) {
-        throw new ApiError(404, "Message not found");
-    }
-
-    return ApiResponse(res, 200, "Message marked as Unread", contact);
 });
 
 const fetchContacts = async (filter: Record<string, any>, cursor?: string): Promise<{
@@ -92,16 +56,6 @@ const fetchContacts = async (filter: Record<string, any>, cursor?: string): Prom
 export const getAllContacts = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
     const data = await fetchContacts({}, req.query.cursor as string);
     return ApiResponse(res, 200, "Messages retrieved successfully", data);
-});
-
-export const getReadContacts = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
-    const data = await fetchContacts({ read: true }, req.query.cursor as string);
-    return ApiResponse(res, 200, "Read messages retrieved successfully", data);
-});
-
-export const getUnreadContacts = asyncHandler(async (req: Request, res: Response): Promise<Response> => {
-    const data = await fetchContacts({ read: false }, req.query.cursor as string);
-    return ApiResponse(res, 200, "Unread messages retrieved successfully", data);
 });
 
 export const deleteContact = asyncHandler(async (req: Request, res: Response): Promise<Response> => {

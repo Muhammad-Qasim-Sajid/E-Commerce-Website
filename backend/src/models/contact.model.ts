@@ -18,10 +18,6 @@ const contactSchema = new mongoose.Schema(
             type: String,
             required: [true, "Message is required"]
         },
-        read: {
-            type: Boolean,
-            default: false
-        },
     },
     {
         timestamps: true
@@ -29,6 +25,5 @@ const contactSchema = new mongoose.Schema(
 );
 
 contactSchema.index({ createdAt: -1 });
-contactSchema.index({ read: 1, createdAt: -1 });
 
 export const Contact = mongoose.model("Contact", contactSchema);

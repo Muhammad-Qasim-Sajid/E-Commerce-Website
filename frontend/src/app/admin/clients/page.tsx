@@ -72,7 +72,7 @@ export default function AdminClients() {
             Clients
           </p>
         </div>
-        
+
         {error ? (
           <div className="bg-white p-6">
             <div className="text-center py-8">

@@ -2,9 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
-import { Order } from '../../lib/types';
 import { orderApi } from '../../lib/api/orderAPIs';
 import Spinner from '../Spinner';
+
+type OrderStatus = 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
+type Order = {
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
+  items: OrderItem[];
+  shippingPrice: number;
+  totalPrice: number;
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
+  shippingTrackingNumber?: string;
+  trackingToken: string;
+  createdAt: string;
+};
 
 interface OrderItem {
   productId: string;

@@ -21,6 +21,8 @@ export interface OrderItem {
   };
 }
 
+type OrderStatus = 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+type PaymentStatus = 'Pending' | 'Paid' | 'Failed';
 export interface Order {
   _id: string;
   customerName: string;
@@ -30,8 +32,8 @@ export interface Order {
   items: OrderItem[];
   shippingPrice: number;
   totalPrice: number;
-  paymentStatus: 'Pending' | 'Paid' | 'Failed';
-  orderStatus: 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
   shippingTrackingNumber?: string;
   createdAt: string;
   updatedAt: string;
@@ -212,7 +214,7 @@ export default function OrderEdit() {
                 <div className="flex-1 max-w-md">
                   <select
                     value={order.orderStatus}
-                    onChange={(e) => setOrder({...order, orderStatus: e.target.value as any})}
+                    onChange={(e) => setOrder({...order, orderStatus: e.target.value as OrderStatus})}
                     className="sm:text-base text-sm w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none"
                   >
                     {orderStatusOptions.map((option) => (
@@ -255,7 +257,7 @@ export default function OrderEdit() {
                 <div className="flex-1 max-w-md">
                   <select
                     value={order.paymentStatus}
-                    onChange={(e) => setOrder({...order, paymentStatus: e.target.value as any})}
+                    onChange={(e) => setOrder({...order, paymentStatus: e.target.value as PaymentStatus})}
                     className="sm:text-base text-sm w-full border border-[#eae2d6] bg-white px-4 py-3 text-[#1a1a1a] focus:outline-none"
                   >
                     {paymentStatusOptions.map((option) => (
