@@ -203,7 +203,7 @@ export default function Checkout() {
       if (response.success) {
         clearCart();
         
-        alert("Order placed successfully! You will receive a confirmation email.");
+        alert("Order placed successfully! A confirmation email has been sent with your order details and tracking information.");
 
         router.push("/");
       } else {

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useInView } from "framer-motion";
 import { Package, Truck, CheckCircle, MapPin, User } from "lucide-react";
-import Link from "next/link";
+import Spinner from '../../../components/Spinner';
 
 const AnimatedSection = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef(null);
@@ -41,48 +43,108 @@ const AnimatedText = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const orderTrackingData = {
-  orderId: "ORDER123456789",
-  customerName: "Ahmed Khan",
-  customerEmail: "ahmed.khan@example.com",
-  customerPhone: "+92 300 1234567",
-  customerAddress:
-    "House no 11, Phase 1 Shadman town Sahiwal, Tehsil & District Sahiwal, Punjab - Pakistan",
-  items: [
-    {
-      productId: "PROD001",
-      variantId: "VAR001",
-      variantSnapshot: {
-        name: "Rose Gold & Black Dial",
-        price: 12999,
-        image: "/1.png",
-      },
-      quantity: 1,
-      totalPrice: 12999,
-    },
-    {
-      productId: "PROD002",
-      variantId: "VAR002",
-      variantSnapshot: {
-        name: "Silver Dial Steel",
-        price: 8999,
-        image: "/3.png",
-      },
-      quantity: 1,
-      totalPrice: 8999,
-    },
-  ],
-  shippingPrice: 1500,
-  totalPrice: 23498,
-  paymentStatus: "Paid",
-  orderStatus: "Shipped",
-  shippingTrackingNumber: "TRK789456123PK",
-  trackingToken: "unique-token-not-displayed",
-  createdAt: new Date("2024-01-15").toISOString(),
-};
+interface OrderItem {
+  productId: string;
+  variantId: string;
+  variantSnapshot: {
+    name: string;
+    price: number;
+    image: string;
+  };
+  quantity: number;
+  totalPrice: number;
+}
+
+interface OrderTrackingData {
+  orderId: string;
+  customerName: string;
+  customerAddress: string;
+  items: OrderItem[];
+  shippingPrice: number;
+  totalPrice: number;
+  paymentStatus: string;
+  orderStatus: string;
+  shippingTrackingNumber: string | null;
+  createdAt: string;
+}
 
 export default function OrderTracking() {
-  const [order] = useState(orderTrackingData);
+  const searchParams = useSearchParams();
+  const [order, setOrder] = useState<OrderTrackingData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const token = searchParams.get('token');
+        
+        if (!token) {
+          setError("No tracking token provided");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/track-order?token=${token}`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch order');
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setOrder(data.data);
+        } else {
+          throw new Error(data.message || 'Failed to fetch order');
+        }
+      } catch (err) {
+        const error = err as Error;
+        setError(error.message || 'Failed to load order tracking information');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [searchParams]);
+
+  if (loading) {
+    return (
+      <Spinner />
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] pt-20 lg:pt-22">
+        <section className="pb-26 pt-0">
+          <div className="container mx-auto lg:px-40 sm:px-20 px-10">
+            <div className="text-center py-24">
+              <div className="w-20 h-20 border border-[#1a1a1a]/20 flex items-center justify-center mx-auto mb-6">
+                <Package className="w-8 h-8 text-[#1a1a1a]/40" />
+              </div>
+              <p className="font-['Playfair_Display'] italic text-2xl mb-8">
+                {error || "Order not found"}
+              </p>
+              <Link
+                href="/"
+                className="group inline-flex items-center gap-3 border border-[#1a1a1a] text-[#1a1a1a] sm:px-8 px-6 sm:py-4 py-3 hover:border-[#d4af37] hover:text-[#d4af37] transition-all duration-300"
+              >
+                <span className="sm:text-base text-sm">Return to Home</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#eeeceb] text-[#1a1a1a] pt-20 lg:pt-22">
@@ -104,7 +166,7 @@ export default function OrderTracking() {
       {/* Main Content */}
       <section className="pb-26 pt-0">
         <div className="container mx-auto lg:px-40 sm:px-20 px-10">
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-12 lg:gap-20">
+          <div className="grid grid-cols-1 gap-12 lg:gap-20">
             {/* Left Column - Order Status & Items */}
             <div className="lg:col-span-2 space-y-12">
               <AnimatedSection>
@@ -141,7 +203,6 @@ export default function OrderTracking() {
                         <p className="font-light sm:text-xl text-lg">
                           {order.orderStatus}
                         </p>
-                        <p className="text-gray-500 sm:text-sm text-xs">Current Status</p>
                       </div>
                     </div>
                     <div className="sm:text-right">
@@ -166,7 +227,7 @@ export default function OrderTracking() {
 
                   <div className="space-y-4">
                     {order.items.map((item) => (
-                      <AnimatedText key={item.variantId}>
+                      <AnimatedText key={`${item.productId}-${item.variantId}`}>
                         <div className="border border-[#1a1a1a]/20 sm:p-6 p-4">
                           <div className="flex flex-col sm:flex-row items-start gap-4">
                             <div className="sm:w-20 sm:h-20 w-16 h-16 overflow-hidden">

@@ -125,7 +125,7 @@ export const addOrder = asyncHandler(async (req: Request, res: Response): Promis
         session.endSession();
     }
 
-    const trackingUrl = `${process.env.FRONTEND_URL}/orders/track-order?token=${createdOrder.trackingToken}`;
+    const trackingUrl = `${process.env.FRONTEND_URL}/track-order?token=${createdOrder.trackingToken}`;
 
     try {
         await sendEmail({
