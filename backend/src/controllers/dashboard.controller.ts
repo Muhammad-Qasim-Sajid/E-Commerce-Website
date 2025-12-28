@@ -141,7 +141,7 @@ export const getDashboard = asyncHandler(async(req: Request, res: Response) => {
                 customerName: order.customerName,
                 customerEmail: order.customerEmail,
                 createdAt: order.createdAt,
-                items: order.items,
+                items: order.items.reduce((sum, item) => sum + item.quantity, 0),
                 totalPrice: order.totalPrice,
                 paymentStatus: order.paymentStatus
             })),

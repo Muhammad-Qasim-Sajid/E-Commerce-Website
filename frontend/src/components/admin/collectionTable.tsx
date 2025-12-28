@@ -166,7 +166,7 @@ const CollectionTable = () => {
                   <tr 
                     key={product._id} 
                     className="hover:bg-[#f9f7f3]/50 cursor-pointer group"
-                    onClick={() => window.open(`/collection/${product._id}`, '_blank')}
+                    onClick={() => window.open(`/collections/collection/${product._id}`, '_blank')}
                   >
                     <td className="px-4 sm:px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-center">

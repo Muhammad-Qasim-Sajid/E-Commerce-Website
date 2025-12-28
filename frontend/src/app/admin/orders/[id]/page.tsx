@@ -7,7 +7,10 @@ import { orderApi } from '../../../../lib/api/orderAPIs';
 import Spinner from '../../../../components/Spinner';
 
 export interface OrderItem {
-  productId: string;
+  productId: {
+    _id: string;
+    name: string;
+  };
   variantId: string;
   variantSnapshot: {
     name: string;
@@ -16,9 +19,6 @@ export interface OrderItem {
   };
   quantity: number;
   totalPrice: number;
-  product?: {
-    name: string;
-  };
 }
 
 export interface Order {
@@ -177,7 +177,7 @@ export default function OrderDetailPage() {
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={item.variantSnapshot.image}
-                              alt={item.product?.name || 'Product'}
+                              alt={item.productId?.name || 'Product'}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -185,7 +185,7 @@ export default function OrderDetailPage() {
                           <div className="flex-1 mt-1">
                             <div>
                               <p className="font-['Playfair_Display'] text-[#1a1a1a] tracking-tight">
-                                {item.product?.name || 'Product'}
+                                {item.productId?.name || 'Product'}
                               </p>
                               <p className="text-sm text-[#666666] mt-1">{item.variantSnapshot.name}</p>
                               <div className="mt-2">
